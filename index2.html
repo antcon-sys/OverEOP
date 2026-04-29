@@ -1,0 +1,3209 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Overlay PRO Suite - v30 (Laranja Flutuante)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ____________________________________________________________________________________ */
+        /* --- 1. VARIÁVEIS GERAIS --- */
+        /* ____________________________________________________________________________________ */
+        :root {
+            --bg-1: #0e1b2a;     --bg-2: #ff6600;     --bg-3: #1e293b;     --bg-4: #0e1b2a;     
+            --txt-1: #0e1b2a;    --txt-2: #ffffff;    --txt-3: #fbbf24;    
+            --bg-gradient: linear-gradient(90deg, var(--bg-1) 0%, var(--bg-1) 100%);
+            --font-main: 'Roboto Condensed', sans-serif; --radius: 0px; 
+        }
+        * { box-sizing: border-box; } body { margin: 0; padding: 0; background: transparent; overflow: hidden; font-family: var(--font-main); }
+
+        /* ____________________________________________________________________________________ */
+        /* --- 2. INTRODUÇÃO (MATCH CARD) --- */
+        /* ____________________________________________________________________________________ */
+        #container-intro { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5000; pointer-events: none; }
+        #match-card { width: 1000px; height: 600px; position: relative; display: flex; flex-direction: column; filter: drop-shadow(0 20px 50px rgba(0,0,0,0.9)); opacity: 0; transform: scale(0.9); pointer-events: auto; }
+        .card-bg { position: absolute; inset: 0; background: var(--bg-gradient); border-radius: 12px; z-index: 0; border: 2px solid rgba(255,255,255,0.1); }
+        .card-header { position: relative; z-index: 2; text-align: center; padding-top: 40px; color: var(--txt-3); }
+        .league-name { font-size: 42px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px; line-height: 1; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .match-phase { font-size: 20px; font-weight: 400; color: #ccc; text-transform: uppercase; letter-spacing: 3px; margin-top: 10px; position: relative; display: inline-block; }
+        .match-phase::before, .match-phase::after { content: ''; position: absolute; top: 50%; width: 40px; height: 2px; background: var(--bg-2); }
+        .match-phase::before { right: 100%; margin-right: 15px; } .match-phase::after { left: 100%; margin-left: 15px; }
+        .card-body { flex: 1; position: relative; z-index: 2; display: flex; align-items: center; justify-content: space-between; padding: 0 80px; margin-bottom: 40px; }
+        .shield-container { width: 280px; height: 280px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.6)); }
+        .shield-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .name-bar-container { position: relative; z-index: 3; margin: 0 40px 30px 40px; height: 90px; background: var(--bg-4); border-radius: 8px; display: flex; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); border-bottom: 4px solid var(--bg-2); overflow: hidden; }
+        .team-name-box { flex: 1; text-align: center; font-size: 36px; font-weight: 700; color: var(--txt-2); text-transform: uppercase; }
+        .vs-badge { width: 60px; height: 100%; background: var(--bg-1); display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 900; color: var(--txt-3); transform: skewX(-20deg); border-left: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); z-index: 2; }
+        .vs-badge span { transform: skewX(20deg); }
+        .card-footer { position: relative; z-index: 2; text-align: center; padding-bottom: 25px; color: #aaa; font-size: 16px; font-weight: 400; text-transform: uppercase; letter-spacing: 1px; }
+        .intro-enter { animation: zoomIn 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+        .intro-exit { animation: flyDownDeep 0.8s cubic-bezier(0.5, 0, 0.75, 0) forwards; }
+        @keyframes zoomIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes flyDownDeep { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(120vh); } }
+
+        /* ____________________________________________________________________________________ */
+        /* --- 3. PLACAR SUPERIOR --- */
+        /* ____________________________________________________________________________________ */
+        #container-superior { position: absolute; top: 80px; left: 80px; z-index: 1000; display: none; transform: scale(0.9); transform-origin: top left; }
+        #container-superior.ativo { display: block; }
+        #placar { position: relative; z-index: 100; display: flex; align-items: stretch; height: 55px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); opacity: 0; transform: translateY(-100%); }
+        #placar.entrando { animation: slideDown 0.6s cubic-bezier(0.2, 1, 0.3, 1) forwards; }
+        #placar.saindo { animation: slideUp 0.5s ease forwards; }
+        @keyframes slideDown { 0% { transform: translateY(-100%); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(-100%); opacity: 0; } }
+        #bloco-times { display: flex; flex-direction: row; background: var(--bg-gradient); width: 340px; overflow: hidden; transition: width 0.8s cubic-bezier(0.25, 1, 0.5, 1); border-radius: var(--radius); position: relative; z-index: 10; }
+        #bloco-times.base-expandida { width: 600px !important; }
+        .team-row { display: flex; align-items: center; height: 100%; flex: 1; overflow: hidden; }
+        .color-strip { width: 6px; height: 100%; flex-shrink: 0; }
+        .name-box { flex: 1; display: flex; align-items: center; height: 100%; padding: 0 15px; overflow: hidden; background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.05) 100%); white-space: nowrap; }
+        #box-home { justify-content: flex-end; text-align: right; } #box-away { justify-content: flex-start; text-align: left; }
+        .team-name { font-size: 26px; font-weight: 700; color: var(--txt-2); text-transform: uppercase; letter-spacing: 0.5px; }
+        .score-box { width: 50px; height: 100%; background: var(--bg-4); color: var(--txt-3); font-size: 34px; font-weight: 700; display: flex; align-items: center; justify-content: center; position: relative; z-index: 2; flex-shrink: 0; }
+        .vs-divider { width: 1px; height: 60%; background: rgba(255,255,255,0.2); align-self: center; flex-shrink: 0; }
+        #linha-inferior { margin-left: 0; padding: 0; background: transparent; display: flex; align-items: center; position: relative; z-index: 5; transform: scaleX(0); opacity: 0; transform-origin: left; }
+        #linha-inferior.animar { animation: scaleIn 0.5s cubic-bezier(0.2, 1, 0.3, 1) forwards 0.3s; }
+        @keyframes scaleIn { to { transform: scaleX(1); opacity: 1; } }
+        .timer-box { position: relative; z-index: 20; background: var(--bg-2); color: var(--txt-1); height: 100%; padding: 0 15px; display: flex; align-items: center; justify-content: center; min-width: 90px; }
+        .timer-text { font-size: 38px; font-weight: 900; letter-spacing: -1px; line-height: 1; margin-top: -2px; }
+        #box-acrescimo { position: absolute; left: 100%; top: 0; height: 100%; z-index: 10; background: var(--bg-1); color: var(--txt-2); display: flex; align-items: center; justify-content: center; padding: 0 12px 0 8px; font-weight: 900; font-size: 24px; transform: translateX(-100%); opacity: 0; transition: transform 0.5s, opacity 0.2s; }
+        #box-acrescimo.ativo { transform: translateX(0); opacity: 1; }
+
+        #box-periodo { position: absolute; left: 100%; top: 0; height: 100%; z-index: 9; background: var(--bg-1); color: var(--txt-2); display: flex; align-items: center; justify-content: center; padding: 0 12px; font-weight: 900; font-size: 30px; min-width: 72px; transform: translateX(-100%); opacity: 0; transition: transform 0.5s, opacity 0.2s; }
+        #box-periodo.ativo { transform: translateX(0); opacity: 1; }
+
+        /* Acrescimo BR: aparece depois do período (usa BG2 como destaque) */
+        #box-acrescimo-br { position: absolute; left: calc(100% + 72px); top: 0; height: 100%; z-index: 8; background: var(--bg-2); color: var(--txt-1); display: flex; align-items: center; justify-content: center; padding: 0 12px; font-weight: 900; font-size: 24px; min-width: 64px; transform: translateX(-100%); opacity: 0; transition: transform 0.5s, opacity 0.2s; }
+        #box-acrescimo-br.ativo { transform: translateX(0); opacity: 1; }
+
+        #placar { overflow: visible; }
+        .goal-score-overlay { position: absolute; top: 0; left: 0; width: 340px; height: 55px; overflow: hidden; opacity: 0; pointer-events: none; z-index: 160; }
+        .goal-score-overlay.active { opacity: 1; }
+        .goal-score-bg { position: absolute; inset: 0; background: linear-gradient(90deg, #ff6600, #ff8c00); transform: translateX(-100%); }
+        .goal-score-overlay.away .goal-score-bg { transform: translateX(100%); background: linear-gradient(270deg, #ff6600, #ff8c00); }
+        .goal-score-main { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; letter-spacing: 3px; color: #ffffff; text-shadow: 0 0 18px rgba(255,255,255,0.45); opacity: 0; box-sizing: border-box; text-align: center; padding: 0; }
+        .goal-score-echo-wrap { position: absolute; inset: 0; display: flex; align-items: center; overflow: hidden; opacity: 0; box-sizing: border-box; justify-content: center; padding: 0; }
+        .goal-score-overlay.home .goal-score-echo-wrap,
+        .goal-score-overlay.home .goal-score-main { justify-content: center; padding-left: 0; padding-right: 0; }
+        .goal-score-overlay.away .goal-score-echo-wrap,
+        .goal-score-overlay.away .goal-score-main { justify-content: center; padding-left: 0; padding-right: 0; }
+        .goal-score-echo-track { display: flex; gap: 34px; white-space: nowrap; font-size: 28px; font-weight: 900; color: rgba(255,255,255,0.18); }
+        .goal-score-overlay.enter.home .goal-score-bg { animation: goalScoreInHome 0.5s forwards; }
+        .goal-score-overlay.enter.away .goal-score-bg { animation: goalScoreInAway 0.5s forwards; }
+        .goal-score-overlay.enter .goal-score-main { animation: goalScoreTextIn 0.6s forwards 0.18s; }
+        .goal-score-overlay.enter .goal-score-echo-wrap { animation: goalScoreFadeIn 0.18s forwards 0.16s; }
+        .goal-score-overlay.enter.home .goal-score-echo-track { animation: goalScoreEchoHome 1.0s linear infinite; }
+        .goal-score-overlay.enter.away .goal-score-echo-track { animation: goalScoreEchoAway 1.0s linear infinite; }
+        .goal-score-overlay.exit.home .goal-score-bg { animation: goalScoreOutHome 0.45s forwards; }
+        .goal-score-overlay.exit.away .goal-score-bg { animation: goalScoreOutAway 0.45s forwards; }
+        .goal-score-overlay.exit .goal-score-main { animation: goalScoreTextOut 0.35s forwards; }
+        .goal-score-overlay.exit .goal-score-echo-wrap { animation: goalScoreFadeOut 0.18s forwards; }
+        @keyframes goalScoreInHome { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+        @keyframes goalScoreInAway { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes goalScoreOutHome { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        @keyframes goalScoreOutAway { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-100%); opacity: 0; } }
+        @keyframes goalScoreTextIn { 0% { opacity: 0; transform: scale(0.45); } 70% { transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes goalScoreTextOut { to { opacity: 0; transform: scale(0.72); } }
+        @keyframes goalScoreFadeIn { to { opacity: 1; } }
+        @keyframes goalScoreFadeOut { to { opacity: 0; } }
+        @keyframes goalScoreEchoHome { from { transform: translateX(0); } to { transform: translateX(-54px); } }
+        @keyframes goalScoreEchoAway { from { transform: translateX(0); } to { transform: translateX(54px); } }
+
+        /* ____________________________________________________________________________________ */
+        /* --- 4. PLACAR INFERIOR & LOWER THIRDS (AQUI ESTÁ A CORREÇÃO V29) --- */
+        /* ____________________________________________________________________________________ */
+        #container-inferior { 
+            position: absolute; 
+            bottom: 80px; /* <--- VOLTEI PARA 80PX (Base do placar fica embaixo) */
+            left: 0; 
+            width: 100%; 
+            z-index: 2000; 
+            display: flex; 
+            justify-content: center; 
+            pointer-events: none; 
+        }
+        
+        .lowerbar { 
+            width: 800px; 
+            height: auto; 
+            display: flex; 
+            flex-direction: column; 
+            transform: translateY(100px); 
+            opacity: 0; 
+        }
+
+        #container-inferior.ativo .lowerbar { animation: slideUpFade 0.6s ease forwards; }
+        .lowerbar.saindo { animation: flyOutDown 0.6s cubic-bezier(0.6, -0.28, 0.74, 0.05) forwards !important; }
+        @keyframes slideUpFade { to { transform: translateY(0); opacity: 1; } }
+        @keyframes flyOutDown { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(150px); opacity: 0; } }
+        
+        /* >>> AQUI A MÁGICA: A BARRA LARANJA SOBE SOZINHA <<< */
+        .topbar {
+            align-self: center;
+            background: var(--bg-2);
+            color: var(--txt-1);
+            padding: 6px 40px;        
+            font-weight: 900;
+            font-size: 20px;
+            text-transform: uppercase;
+            
+            /* Sobe 15px criando um espaço entre ela e o placar */
+            margin-bottom: 15px; 
+            border-radius: 4px; /* Arredonda ela toda */
+            
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 750px;
+            display: block;
+            text-align: center;
+            line-height: 1.1;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); /* Sombra para dar destaque */
+        }
+
+        .mainrow { height: 60px; width: 100%; background: var(--bg-gradient); display: flex; align-items: center; justify-content: space-between; border-radius: 4px; padding: 0 10px; border-bottom: 4px solid var(--bg-2); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+        .side { font-size: 24px; font-weight: 700; color: var(--txt-2); text-transform: uppercase; flex: 1; text-align: center; }
+        .shield-box { width: 90px; height: 90px; display: flex; align-items: center; justify-content: center; background: white; padding: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.5); border-radius: 4px; z-index: 20; position: relative; }
+        .shield-box img { width: 100%; height: 100%; object-fit: contain; }
+        .center-score-low { background: rgba(255,255,255,0.1); height: 45px; padding: 0 20px; margin: 0 15px; display: flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 900; color: var(--txt-3); }
+        .center-text-low { font-size: 18px; line-height: 1.1; text-align: center; white-space: nowrap; font-weight: 900; color: var(--txt-3); }
+        
+#overlay-lower{
+    position: fixed;
+    left: -10000px;
+    bottom: -10000px;
+    z-index: 4500;
+    pointer-events: none;
+    display: none;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(160px);
+    will-change: transform, opacity;
+}
+#overlay-lower.visible{
+    left: 80px;
+    bottom: 80px;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+    animation: lowerEnter 0.6s ease forwards;
+}
+#overlay-lower.saindo{
+    left: 80px;
+    bottom: 80px;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(0) translateY(0);
+    animation: lowerExit 0.6s ease forwards !important;
+}
+@keyframes lowerEnter{
+    0%{ opacity:0; transform:translateY(160px); }
+    100%{ opacity:1; transform:translateX(0) translateY(0); }
+}
+@keyframes lowerExit{
+    0%{ opacity:1; transform:translateX(0) translateY(0); }
+    100%{ opacity:0; transform:translateY(160px); }
+}
+
+.info-bar { display: flex; flex-direction: column; align-items: flex-start; }
+        .info-name-box { background: var(--bg-gradient); padding: 10px 25px; border-left: 6px solid var(--bg-2); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .info-name { font-size: 32px; font-weight: 900; color: var(--txt-2); text-transform: uppercase; }
+        .info-role-box { background: var(--bg-2); padding: 5px 15px; margin-left: 20px; margin-top: -5px; transform: translateY(0); z-index: -1; }
+        .info-role { font-size: 18px; font-weight: 700; color: var(--txt-1); text-transform: uppercase; }
+
+        /* ____________________________________________________________________________________ */
+        /* --- 5. ESCALAÇÃO (LINEUP) --- */
+        /* ____________________________________________________________________________________ */
+        #container-escalacao { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 3000; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        .lineup-content { width: 1142px; height: 900px; zoom: 0.8; display: flex; opacity: 0; transform: translateX(-100px); transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1); box-shadow: 0 30px 60px rgba(0,0,0,0.8); border-radius: 12px; overflow: hidden; pointer-events: auto; background: var(--bg-1); border: 2px solid var(--bg-2); }
+        .lineup-content.ativo { opacity: 1; transform: translateX(0); }
+        .l-sidebar { width: 35%; height: 100%; background: var(--bg-2); display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 6px solid var(--bg-1); position: relative; z-index: 10; }
+        .l-crest { width: 250px; height: 250px; margin-bottom: 30px; } .l-crest img { width: 100%; height: 100%; object-fit: contain; }
+        .l-teamname { font-size: 48px; font-weight: 900; color: var(--txt-1); text-align: center; text-transform: uppercase; margin: 0 20px; }
+        .l-coach-name { font-size: 28px; color: var(--txt-1); font-weight: 700; text-transform: uppercase; margin-top: 10px; }
+        .l-formation-label { margin-top: 15px; font-size: 22px; color: var(--txt-1); font-weight: 900; text-transform: uppercase; border: 2px solid var(--txt-1); padding: 5px 15px; border-radius: 20px; }
+        .l-main-area { width: 65%; height: 100%; position: relative; background: var(--bg-1); overflow: hidden; }
+        .slider-wrapper { display: flex; width: 300%; height: 100%; transition: transform 0.8s cubic-bezier(0.2, 1, 0.3, 1); }
+        .slider-wrapper.mode-list { transform: translateX(0%); } .slider-wrapper.mode-pitch { transform: translateX(-33.33%); } .slider-wrapper.mode-reserves { transform: translateX(-66.66%); }
+        .view-list, .view-reserves { width: 33.33%; height: 100%; display: flex; flex-direction: column; padding: 40px; position: relative; }
+        .list-header { font-size: 32px; font-weight: 900; color: var(--txt-3); text-transform: uppercase; border-bottom: 4px solid var(--bg-2); margin-bottom: 20px; padding-bottom: 10px; }
+        .l-row { min-height: 55px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; }
+        .l-num { width: 70px; font-size: 32px; font-weight: 900; color: var(--txt-3); text-align: center; border-right: 2px solid rgba(255,255,255,0.1); margin-right: 20px; }
+        .l-name { font-size: 28px; font-weight: 500; color: var(--txt-2); text-transform: uppercase; }
+        .view-pitch { width: 33.33%; height: 100%; position: relative; background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%); }
+        .pitch-lines { position: absolute; inset: 40px; border: 3px solid rgba(255,255,255,0.25); border-radius: 4px; }
+        .pitch-half { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.25); }
+        .pitch-circle { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 140px; height: 140px; border: 3px solid rgba(255,255,255,0.25); border-radius: 50%; }
+        .pitch-box-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 250px; height: 100px; border: 3px solid rgba(255,255,255,0.25); border-top: none; }
+        .pitch-box-btm { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 250px; height: 100px; border: 3px solid rgba(255,255,255,0.25); border-bottom: none; }
+        .tac-player { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; width: auto; min-width: 80px; transition: 0.8s; }
+        .tac-dot { width: 50px; height: 50px; border-radius: 50%; background: var(--bg-2); border: 3px solid white; color: var(--txt-1); display: flex; align-items: center; justify-content: center; font-size: 22px; font-weight: 900; box-shadow: 0 5px 15px rgba(0,0,0,0.5); position: relative; z-index: 5; }
+        .tac-name { position: absolute; top: 55px; left: 50%; transform: translateX(-50%); background: var(--bg-2); color: var(--txt-1); padding: 4px 10px; border-radius: 4px; font-size: 16px; font-weight: 700; text-transform: uppercase; white-space: nowrap; width: max-content; max-width: 200px; text-shadow: none; box-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 10; border: 1px solid rgba(255,255,255,0.2); }
+
+        /* ____________________________________________________________________________________ */
+        /* --- 6. EXTRAS (PÊNALTIS, CARTÕES, SUBS, MERCHAN, ARBITRAGEM) --- */
+        /* ____________________________________________________________________________________ */
+        /* PENALTIS */
+        @keyframes flyInPen { 0% { transform: translate(-50%, 150%) scale(0.85); opacity: 0; } 100% { transform: translate(-50%, 0) scale(0.85); opacity: 1; } }
+        @keyframes flyOutPen { 0% { transform: translate(-50%, 0) scale(0.85); opacity: 1; } 100% { transform: translate(-50%, 150%) scale(0.85); opacity: 0; } }
+        #container-penaltis { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%) scale(0.85); transform-origin: bottom center; width: 1100px; display: none; flex-direction: column; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.8)); z-index: 6000; }
+        #container-penaltis.show { display: flex !important; animation: flyInPen 0.8s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards; }
+        #container-penaltis.exiting { animation: flyOutPen 0.6s cubic-bezier(0.6, -0.28, 0.74, 0.05) forwards; }
+        #container-penaltis .penalty-strip { height: 70px; background-color: var(--bg-1); border-bottom: 1px solid rgba(255,255,255,0.1); display: grid; grid-template-columns: 1fr 200px 1fr; align-items: center; padding: 0 10px; }
+        #container-penaltis .dots-area { display: flex; align-items: center; justify-content: center; gap: 12px; }
+        #container-penaltis .badge-container { display: flex; justify-content: center; align-items: center; height: 100%; }
+        #container-penaltis .match-badge { background-color: var(--bg-2); color: var(--txt-2); font-size: 16px; font-weight: 900; text-transform: uppercase; padding: 8px 30px; letter-spacing: 2px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        #container-penaltis .dot { width: 42px; height: 42px; border-radius: 50%; background-color: rgba(0,0,0,0.6); border: 2px solid rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.5); }
+        #container-penaltis .dot-goal { background-color: #16a34a; border-color: #22c55e; color: white; }
+        #container-penaltis .dot-miss { background-color: #dc2626; border-color: #ef4444; color: white; }
+        #container-penaltis .dot-active { border-color: #fbbf24; background-color: #451a03; color: #fbbf24; transform: scale(1.2); border-width: 3px; z-index: 5; box-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+        #container-penaltis .main-board { height: 90px; background: var(--bg-1); position: relative; z-index: 5; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+        #container-penaltis .main-board::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--bg-2); }
+        #container-penaltis .team-name-area { display: flex; justify-content: center; align-items: center; }
+        #container-penaltis .team-name { font-size: 38px; font-weight: 900; color: var(--txt-2); text-transform: uppercase; letter-spacing: -1px; text-align: center; }
+        #container-penaltis .center-score-area { display: flex; align-items: center; justify-content: center; height: 100%; padding: 0 20px; gap: 15px; background-color: transparent; }
+        #container-penaltis .score-box { background-color: var(--bg-4); padding: 5px 25px; border-radius: 6px; display: flex; align-items: center; justify-content: center; height: 70px; min-width: 160px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        #container-penaltis .score-text { font-size: 60px; font-weight: 900; color: var(--txt-3); line-height: 1; padding-top: 6px; white-space: nowrap; }
+        #container-penaltis .team-logo { width: 70px; height: 70px; object-fit: contain; background: #fff; padding: 4px; border-radius: 50%; box-shadow: 0 0 10px rgba(0,0,0,0.5); z-index: 10; }
+
+        /* CARTÕES & SUB */
+        #overlay-card { position: fixed; left: 80px; bottom: 80px; z-index: 4000; transform: scale(0.9); transform-origin: bottom left; opacity: 0; }
+        #overlay-card.visible { opacity: 1; }
+        #card-elemento { display: flex; align-items: center; background: var(--bg-gradient); padding: 10px 20px; border-left: 6px solid var(--bg-2); transform: translateX(-100%); opacity: 0; }
+        #card-bar { width: 40px; height: 55px; margin-right: 20px; }
+        #card-crest { width: 60px; height: 60px; margin-right: 15px; } #card-crest img { width: 100%; height: 100%; object-fit: contain; }
+        .card-content { display: flex; flex-direction: column; }
+        .card-num { font-size: 32px; font-weight: 900; color: var(--txt-3); margin-right: 10px; }
+        .card-name { font-size: 32px; font-weight: 700; color: var(--txt-2); text-transform: uppercase; max-width: 450px; }
+        .card-label { font-size: 14px; color: #ccc; text-transform: uppercase; }
+        .card-line1 { display: flex; align-items: baseline; }
+        
+        #overlay-sub { position: fixed; left: 80px; bottom: 80px; z-index: 4000; transform: scale(0.9); transform-origin: bottom left; display: none; }
+        #overlay-sub.visible { display: block; }
+        #sub-anim-container { display: flex; align-items: center; transform: translateX(-100%); opacity: 0; }
+        .sub-bars-structure { display: flex; flex-direction: column; width: 420px; height: 90px; justify-content: center; position: relative; padding-left: 40px; background: var(--bg-gradient); overflow: hidden; border-right: 4px solid var(--bg-2); }
+        .sub-crest-internal { position: absolute; left: 0; top: 0; bottom: 0; width: 90px; display: flex; align-items: center; justify-content: center; background: var(--bg-1); z-index: 30; }
+        .sub-crest-internal img { max-width: 70%; max-height: 70%; object-fit: contain; }
+        .sub-text-wrapper { position: absolute; left: 90px; right: 0; top: 0; bottom: 0; z-index: 20; }
+        .sub-text-row { position: absolute; width: 100%; height: 50%; display: flex; align-items: center; padding: 0 15px; transition: transform 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        .sub-text-row.top-pos { top: 0; } .sub-text-row.btm-pos { bottom: 0; }
+        .sub-text-wrapper.swapped .sub-text-row.top-pos { transform: translateY(45px); }
+        .sub-text-wrapper.swapped .sub-text-row.btm-pos { transform: translateY(-45px); }
+        .sub-info { display: flex; align-items: center; width: 100%; font-weight: 700; text-transform: uppercase; color: var(--txt-2); font-size: 20px; }
+        .sub-num { width: 35px; text-align: center; margin-right: 10px; color: var(--txt-3); }
+        .sub-arrow { margin-left: auto; margin-right: 5px; font-size: 14px; }
+        .flyIn { animation: slideInLeft 0.5s cubic-bezier(0.2, 0.9, 0.2, 1) forwards; }
+        .flyOut { animation: slideDownExit 0.6s cubic-bezier(0.5, 0, 0.75, 0) forwards; }
+        @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideDownExit { 0% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(100px); opacity: 0; } }
+
+        /* ARBITRAGEM, MERCHAN & LOGO */
+        #container-arbitragem { position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(50px); width: 480px; opacity: 0; transition: opacity 0.5s ease-out, transform 0.5s ease-out; pointer-events: none; z-index: 5500; display: flex; flex-direction: column; }
+        #container-arbitragem.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .arb-card { box-shadow: 0 10px 25px rgba(0,0,0,0.8); border-radius: 4px; overflow: hidden; font-family: 'Roboto', sans-serif; }
+        .arb-header { background-color: var(--bg-2); color: var(--txt-1); padding: 12px 0; text-align: center; font-weight: 900; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .arb-body { background-color: var(--bg-1); padding: 10px 20px; display: flex; flex-direction: column; }
+        .arb-row { display: flex; align-items: center; color: var(--txt-2); padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .arb-row:last-child { border-bottom: none; } .arb-row.hidden { display: none; }
+        .arb-label { width: 130px; display: flex; align-items: center; gap: 8px; font-weight: 500; color: var(--txt-2); opacity: 0.8; font-size: 11px; text-transform: uppercase; }
+        .arb-label i { color: var(--bg-2); font-size: 12px; width: 15px; text-align: center; }
+        .arb-name { font-weight: 900; text-transform: uppercase; font-size: 13px; letter-spacing: 0.3px; flex: 1; color: var(--txt-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #merchan-mask { position: absolute; top: 50px; left: 0; width: 710px; height: 150px; overflow: hidden; pointer-events: none; z-index: 50; }
+        #merchan-content { width: 100%; display: flex; justify-content: center; transform: translateY(-100%); transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1); padding-top: 5px; }
+        #merchan-content.visible { transform: translateY(0); }
+        #img-merchan { width: 100%; height: auto; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; box-shadow: 0 10px 20px rgba(0,0,0,0.5); display: none; border: none; outline: none; }
+        .logo-tv { position: fixed; bottom: 40px; right: 40px; width: 120px; z-index: 6000; opacity: 0; transform: scale(0.8); transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28); object-fit: contain; pointer-events: none; }
+        .logo-tv.visible { opacity: 0.9; transform: scale(1); }
+        #overlay-outros-jogos { position: absolute; left: 0; bottom: 80px; width: 100%; z-index: 4200; display: none; justify-content: center; pointer-events: none; }
+        #overlay-outros-jogos.visible { display: flex; }
+        #overlay-outros-jogos .oj-card { width: 800px; height: 60px; display: block; position: relative; overflow: visible; transform: translateY(100px); opacity: 0; }
+        #overlay-outros-jogos.visible .oj-card { animation: slideUpFade 0.6s ease forwards; }
+        #overlay-outros-jogos .oj-card.saindo { animation: flyOutDown 0.6s cubic-bezier(0.6, -0.28, 0.74, 0.05) forwards !important; }
+        #overlay-outros-jogos .oj-mainrow { position: relative; height: 60px; width: 100%; background: var(--bg-gradient); display: flex; align-items: center; justify-content: space-between; border-radius: 4px; padding: 0 10px; border-bottom: 4px solid var(--bg-2); box-shadow: 0 5px 15px rgba(0,0,0,0.4); }
+        #overlay-outros-jogos .oj-side { font-size: 24px; font-weight: 700; color: var(--txt-2); text-transform: uppercase; flex: 1; text-align: center; display:flex; align-items:center; justify-content:center; min-width:0; overflow:hidden; }
+        #overlay-outros-jogos .oj-side span { display:block; width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+        #overlay-outros-jogos .oj-score { background: rgba(255,255,255,0.1); height: 45px; padding: 0 20px; margin: 0 15px; display: flex; align-items: center; gap: 10px; font-size: 30px; font-weight: 900; color: var(--txt-3); flex: 0 0 auto; }
+        #overlay-outros-jogos .topbar { position: absolute; left: 50%; bottom: calc(100% + 12px); transform: translateX(-50%); margin-bottom: 0; z-index: 2; }
+        #overlay-outros-jogos .oj-statusbar { position: absolute; left: 50%; top: calc(100% + 12px); transform: translateX(-50%); align-self: center; background: var(--bg-1); color: var(--txt-2); padding: 8px 34px; font-weight: 900; font-size: 18px; text-transform: uppercase; margin-top: 0; border-radius: 4px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); max-width: 760px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; z-index: 2; }
+    </style>
+</head>
+<body>
+
+    <div id="container-intro"><div id="match-card"><div class="card-bg"></div><div class="card-header"><div class="league-name" id="intro-league">COPA</div><div class="match-phase" id="intro-phase">FASE</div></div><div class="card-body"><div class="shield-container"><img id="intro-shield-home" src=""></div><div class="vs-badge"><span>VS</span></div><div class="shield-container"><img id="intro-shield-away" src=""></div></div><div class="name-bar-container"><div class="team-name-box" id="intro-name-home">HOME</div><div class="vs-badge"><span>VS</span></div><div class="team-name-box" id="intro-name-away">AWAY</div></div><div class="card-footer"><span id="intro-stadium">ESTÁDIO</span></div></div></div>
+    
+    <div id="container-superior">
+        <div id="placar">
+            <div id="bloco-times">
+                <div class="team-row"><div class="color-strip" id="ps-strip-home"></div><div class="name-box" id="box-home" data-sigla="HOM" data-nome="HOME"><span class="team-name">HOM</span></div><div class="score-box" id="ps-score-home">0</div></div>
+                <div class="vs-divider"></div>
+                <div class="team-row"><div class="score-box" id="ps-score-away">0</div><div class="name-box" id="box-away" data-sigla="AWY" data-nome="AWAY"><span class="team-name">AWY</span></div><div class="color-strip" id="ps-strip-away"></div></div>
+            </div>
+            <div id="linha-inferior"><div class="timer-box"><span class="timer-text" id="tempo">00:00</span></div><div id="box-periodo"><span id="texto-periodo">1ºT</span></div><div id="box-acrescimo"><span id="texto-acrescimo">+0</span></div><div id="box-acrescimo-br"><span id="texto-acrescimo-br">+0</span></div></div>
+        </div>
+        <div id="merchan-mask"><div id="merchan-content"><img id="img-merchan" src="" alt="" onload="this.style.display='block'" onerror="this.style.display='none'"></div></div>
+            <div class="goal-score-overlay home" id="goal-score-home">
+                <div class="goal-score-bg"></div>
+                <div class="goal-score-echo-wrap"><div class="goal-score-echo-track"><span>GOOOL</span><span>GOOOL</span><span>GOOOL</span><span>GOOOL</span></div></div>
+                <div class="goal-score-main">GOOOOL</div>
+            </div>
+            <div class="goal-score-overlay away" id="goal-score-away">
+                <div class="goal-score-bg"></div>
+                <div class="goal-score-echo-wrap"><div class="goal-score-echo-track"><span>GOOOL</span><span>GOOOL</span><span>GOOOL</span><span>GOOOL</span></div></div>
+                <div class="goal-score-main">GOOOOL</div>
+            </div>
+    </div>
+    
+    <div id="container-inferior"><div class="lowerbar" id="stage-inferior"></div></div>
+    <div id="overlay-outros-jogos"><div class="oj-card" id="overlay-outros-jogos-card"></div></div>
+    <div id="overlay-lower" style="display:none; visibility:hidden; opacity:0; left:-10000px; bottom:-10000px; transform:translateY(160px); animation:none;"><div class="info-bar"><div class="info-name-box"><span class="info-name" id="lower-name"></span></div><div class="info-role-box"><span class="info-role" id="lower-role"></span></div></div></div>
+    <script>
+    (function(){
+      var low = document.getElementById('overlay-lower');
+      if (!low) return;
+      low.classList.remove('visible');
+      low.classList.remove('saindo');
+      low.style.animation = 'none';
+      low.style.display = 'none';
+      low.style.visibility = 'hidden';
+      low.style.opacity = '0';
+      low.style.left = '-10000px';
+      low.style.bottom = '-10000px';
+      low.style.transform = 'translateY(160px)';
+    })();
+
+/* === PATCH: Overlay Campeão === */
+try {
+    if (!window.__overlayChampionPatchV1) {
+        window.__overlayChampionPatchV1 = true;
+
+        if (!document.getElementById('overlay-campeao')) {
+            const style = document.createElement('style');
+            style.id = 'overlay-campeao-style';
+            style.innerHTML = `
+                #overlay-campeao{
+                    position:fixed;
+                    inset:0;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    pointer-events:none;
+                    z-index:9800;
+                }
+                #overlay-campeao .champion-wrap{
+                    position:relative;
+                    width:1280px;
+                    height:720px;
+                    opacity:0;
+                    transform:scale(0.94);
+                    filter:drop-shadow(0 28px 60px rgba(0,0,0,0.55));
+                    transform-origin:center center;
+                }
+                #overlay-campeao .champion-wrap.show{
+                    animation:champWrapIn 1200ms cubic-bezier(.2,.9,.2,1) forwards, champCamShake 420ms ease-out 180ms;
+                }
+                #overlay-campeao .champion-wrap.hide{
+                    animation:champWrapOut 700ms cubic-bezier(.6,-0.2,.8,.1) forwards;
+                }
+                @keyframes champWrapIn{ 0%{ opacity:0; transform:scale(0.90); } 100%{ opacity:1; transform:scale(1); } }
+                @keyframes champWrapOut{ 0%{ opacity:1; transform:scale(1); } 100%{ opacity:0; transform:scale(0.93) translateY(40px); } }
+                @keyframes champCamShake{
+                    0%{ transform:translate(0,0) scale(0.94); }
+                    20%{ transform:translate(-4px,2px) scale(0.955); }
+                    40%{ transform:translate(4px,-2px) scale(0.97); }
+                    60%{ transform:translate(-2px,2px) scale(0.985); }
+                    80%{ transform:translate(2px,-1px) scale(0.995); }
+                    100%{ transform:translate(0,0) scale(1); }
+                }
+                #overlay-campeao .flash-burst{
+                    position:absolute; left:50%; top:50%; width:160px; height:160px; transform:translate(-50%,-50%) scale(0);
+                    border-radius:50%;
+                    background:radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(246,215,116,0.85) 22%, rgba(246,215,116,0.30) 45%, rgba(246,215,116,0.00) 72%);
+                    filter:blur(4px); opacity:0; z-index:3; pointer-events:none;
+                }
+                #overlay-campeao .champion-wrap.show .flash-burst{ animation:champFlashBurst 820ms cubic-bezier(.2,.9,.2,1) forwards 80ms; }
+                @keyframes champFlashBurst{ 0%{ opacity:0; transform:translate(-50%,-50%) scale(0); } 18%{ opacity:1; transform:translate(-50%,-50%) scale(2.8); } 100%{ opacity:0; transform:translate(-50%,-50%) scale(5.2); } }
+                #overlay-campeao .light-core{
+                    position:absolute; left:50%; top:49%; width:620px; height:620px; transform:translate(-50%,-50%); border-radius:50%;
+                    background:radial-gradient(circle, rgba(246,215,116,0.22) 0%, rgba(246,215,116,0.08) 34%, rgba(246,215,116,0) 72%);
+                    filter:blur(14px); opacity:0;
+                }
+                #overlay-campeao .champion-wrap.show .light-core{ animation:champLightIn 1200ms ease forwards 120ms, champPulseCore 3400ms ease-in-out infinite 1500ms; }
+                @keyframes champLightIn{ from{ opacity:0; transform:translate(-50%,-50%) scale(0.7); } to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
+                @keyframes champPulseCore{ 0%,100%{ opacity:0.85; transform:translate(-50%,-50%) scale(1); } 50%{ opacity:1; transform:translate(-50%,-50%) scale(1.07); } }
+                #overlay-campeao .beam{
+                    position:absolute; left:50%; top:50%; width:3px; height:520px; transform-origin:center center;
+                    background:linear-gradient(180deg, rgba(246,215,116,0) 0%, rgba(246,215,116,0.35) 50%, rgba(246,215,116,0) 100%);
+                    filter:blur(1px); opacity:0.5;
+                }
+                #overlay-campeao .beam.b1{ transform:translate(-50%,-50%) rotate(8deg); }
+                #overlay-campeao .beam.b2{ transform:translate(-50%,-50%) rotate(-8deg); }
+                #overlay-campeao .beam.b3{ transform:translate(-50%,-50%) rotate(28deg); height:460px; }
+                #overlay-campeao .beam.b4{ transform:translate(-50%,-50%) rotate(-28deg); height:460px; }
+                #overlay-campeao .frame{
+                    position:absolute; inset:48px 78px; border:1px solid rgba(255,255,255,0.06); border-radius:30px;
+                    background:linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.015) 100%);
+                    backdrop-filter:blur(1px); overflow:hidden; opacity:0;
+                }
+                #overlay-campeao .champion-wrap.show .frame{ animation:champFrameIn 900ms ease forwards 160ms; }
+                @keyframes champFrameIn{ from{ opacity:0; transform:translateY(24px); } to{ opacity:1; transform:translateY(0); } }
+                #overlay-campeao .frame::before, #overlay-campeao .frame::after{
+                    content:""; position:absolute; height:3px; border-radius:999px; opacity:0.8;
+                    background:linear-gradient(90deg, rgba(246,215,116,0) 0%, rgba(246,215,116,0.9) 50%, rgba(246,215,116,0) 100%);
+                }
+                #overlay-campeao .frame::before{ width:320px; top:34px; left:50%; transform:translateX(-50%); }
+                #overlay-campeao .frame::after{ width:420px; bottom:34px; left:50%; transform:translateX(-50%); }
+                #overlay-campeao .bg-word{
+                    position:absolute; left:50%; top:23%; transform:translateX(-50%); font-size:132px; font-weight:900; letter-spacing:16px;
+                    text-transform:uppercase; color:rgba(255,255,255,0.06); white-space:nowrap; opacity:0;
+                }
+                #overlay-campeao .champion-wrap.show .bg-word{ animation:champBgWordIn 1200ms ease forwards 280ms; }
+                @keyframes champBgWordIn{ 0%{ opacity:0; transform:translateX(-50%) scale(1.08); } 100%{ opacity:1; transform:translateX(-50%) scale(1); } }
+                #overlay-campeao .center-block{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px; z-index:5; }
+                #overlay-campeao .title{
+                    position:relative; display:flex; align-items:center; justify-content:center; min-width:620px; height:92px; padding:0 54px; border-radius:0;
+                    background:linear-gradient(180deg, rgba(246,215,116,0.98) 0%, rgba(205,166,60,0.98) 100%);
+                    box-shadow:0 16px 40px rgba(0,0,0,0.28), 0 0 0 1px rgba(255,255,255,0.16) inset;
+                    opacity:0; transform:translateY(26px); overflow:hidden;
+                }
+                #overlay-campeao .title::before{
+                    content:""; position:absolute; inset:0;
+                    background:linear-gradient(115deg, rgba(255,255,255,0) 15%, rgba(255,255,255,0.4) 48%, rgba(255,255,255,0) 82%);
+                    transform:translateX(-135%);
+                }
+                #overlay-campeao .champion-wrap.show .title{ animation:champTitleIn 800ms cubic-bezier(.2,.9,.2,1) forwards 450ms; }
+                #overlay-campeao .champion-wrap.show .title::before{ animation:champShineSweep 1800ms ease forwards 1100ms; }
+                @keyframes champTitleIn{ 0%{ opacity:0; transform:translateY(30px) scale(0.94); } 100%{ opacity:1; transform:translateY(0) scale(1); } }
+                @keyframes champShineSweep{ 0%{ transform:translateX(-135%); } 100%{ transform:translateX(135%); } }
+                #overlay-campeao .title span{
+                    position:relative; z-index:2; font-size:58px; line-height:1; font-weight:900; letter-spacing:6px; color:#102216; text-transform:uppercase;
+                    text-shadow:0 1px 0 rgba(255,255,255,0.2);
+                }
+                #overlay-campeao .crest-area{ position:relative; width:360px; height:360px; display:flex; align-items:center; justify-content:center; opacity:0; transform:scale(0.72); }
+                #overlay-campeao .champion-wrap.show .crest-area{ animation:champCrestIn 1000ms cubic-bezier(.2,.9,.2,1) forwards 650ms; }
+                @keyframes champCrestIn{ 0%{ opacity:0; transform:scale(0.72) rotate(-8deg); } 100%{ opacity:1; transform:scale(1) rotate(0deg); } }
+                #overlay-campeao .crest-halo{
+                    position:absolute; width:300px; height:300px; border-radius:50%; border:2px solid rgba(246,215,116,0.32);
+                    box-shadow:0 0 34px rgba(246,215,116,0.14), inset 0 0 24px rgba(246,215,116,0.08); animation:champHaloSpin 16s linear infinite;
+                }
+                #overlay-campeao .crest-halo::before, #overlay-campeao .crest-halo::after{
+                    content:""; position:absolute; width:18px; height:18px; border-radius:50%; background:#f6d774; box-shadow:0 0 18px rgba(246,215,116,0.72);
+                }
+                #overlay-campeao .crest-halo::before{ left:50%; top:8px; transform:translateX(-50%); }
+                #overlay-campeao .crest-halo::after{ left:50%; bottom:8px; transform:translateX(-50%); }
+                @keyframes champHaloSpin{ from{ transform:rotate(0deg); } to{ transform:rotate(360deg); } }
+                #overlay-campeao .crest-plate{ position:relative; width:260px; height:260px; display:flex; align-items:center; justify-content:center; background:transparent; box-shadow:none; overflow:visible; }
+                #overlay-campeao .crest-plate::before{
+                    display:none;
+                }
+                #overlay-campeao .champion-wrap.show .crest-plate::before{ animation:champCrestSweep 1300ms ease forwards 1150ms; }
+                @keyframes champCrestSweep{ 0%{ transform:translateX(-140%) skewX(-22deg); } 100%{ transform:translateX(170%) skewX(-22deg); } }
+                #overlay-campeao .crest-plate img{
+                    width:240px; height:240px; object-fit:contain; display:block;
+                    filter:drop-shadow(0 10px 20px rgba(0,0,0,0.5)) drop-shadow(0 0 18px rgba(246,215,116,0.18));
+                    position:relative; z-index:2; animation:champCrestFloat 3.2s ease-in-out infinite;
+                }
+                @keyframes champCrestFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-9px); } }
+                #overlay-campeao .championship{
+                    position:relative; max-width:980px; text-align:center; font-size:72px; line-height:0.98; font-weight:900; letter-spacing:3px; text-transform:uppercase;
+                    color:#ffffff; text-shadow:0 10px 30px rgba(0,0,0,0.55), 0 0 24px rgba(255,255,255,0.06); opacity:0; transform:translateY(26px);
+                }
+                #overlay-campeao .championship::after{
+                    content:""; position:absolute; left:50%; bottom:-18px; width:380px; height:4px; border-radius:999px; transform:translateX(-50%);
+                    background:linear-gradient(90deg, rgba(246,215,116,0) 0%, rgba(246,215,116,1) 50%, rgba(246,215,116,0) 100%); box-shadow:0 0 20px rgba(246,215,116,0.24);
+                }
+                #overlay-campeao .champion-wrap.show .championship{ animation:champTextUp 850ms ease forwards 900ms; }
+                @keyframes champTextUp{ 0%{ opacity:0; transform:translateY(28px); } 100%{ opacity:1; transform:translateY(0); } }
+                #overlay-campeao .sparkles{ position:absolute; inset:0; pointer-events:none; z-index:4; }
+                #overlay-campeao .spark{
+                    position:absolute; width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,0.9); box-shadow:0 0 14px rgba(255,255,255,0.45);
+                    animation:champTwinkle 2.8s ease-in-out infinite;
+                }
+                #overlay-campeao .spark.s1{ left:25%; top:25%; animation-delay:0.2s; }
+                #overlay-campeao .spark.s2{ left:72%; top:22%; animation-delay:1.1s; }
+                #overlay-campeao .spark.s3{ left:20%; top:60%; animation-delay:0.7s; }
+                #overlay-campeao .spark.s4{ left:79%; top:58%; animation-delay:1.6s; }
+                #overlay-campeao .spark.s5{ left:50%; top:15%; animation-delay:0.4s; width:4px; height:4px; }
+                #overlay-campeao .spark.s6{ left:57%; top:70%; animation-delay:1.9s; width:5px; height:5px; }
+                @keyframes champTwinkle{ 0%,100%{ opacity:0.15; transform:scale(0.6); } 50%{ opacity:1; transform:scale(1.3); } }
+                #overlay-campeao .confetti{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:6; }
+                #overlay-campeao .piece{ position:absolute; left:50%; top:50%; opacity:0; border-radius:2px; animation:champBurstFall linear forwards; transform-origin:center center; }
+                #overlay-campeao .piece.gold{ background:#f6d774; }
+                #overlay-campeao .piece.green{ background:#0f7b3a; }
+                #overlay-campeao .piece.white{ background:#ffffff; }
+                @keyframes champBurstFall{
+                    0%{ transform:translate(-50%,-50%) rotate(0deg) scale(0.3); opacity:0; }
+                    8%{ opacity:1; }
+                    100%{ transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(var(--rot)); opacity:1; }
+                }
+            `;
+            document.head.appendChild(style);
+
+            const wrap = document.createElement('div');
+            wrap.id = 'overlay-campeao';
+            wrap.innerHTML = `
+                <div class="champion-wrap" id="championWrap">
+                    <div class="flash-burst"></div>
+                    <div class="light-core"></div>
+                    <div class="beam b1"></div>
+                    <div class="beam b2"></div>
+                    <div class="beam b3"></div>
+                    <div class="beam b4"></div>
+                    <div class="frame"></div>
+                    <div class="bg-word">campeão</div>
+                    <div class="sparkles">
+                      <div class="spark s1"></div>
+                      <div class="spark s2"></div>
+                      <div class="spark s3"></div>
+                      <div class="spark s4"></div>
+                      <div class="spark s5"></div>
+                      <div class="spark s6"></div>
+                    </div>
+                    <div class="center-block">
+                      <div class="title" id="championTitleBar"><span id="championTitleText">campeão</span></div>
+                      <div class="crest-area">
+                        <div class="crest-halo"></div>
+                        <div class="crest-plate"><img id="teamCrest" alt="Escudo"></div>
+                      </div>
+                      <div class="championship" id="championshipName"></div>
+                    </div>
+                    <div class="confetti" id="confetti"></div>
+                </div>
+            `;
+            document.body.appendChild(wrap);
+        }
+
+        const championWrap = document.getElementById('championWrap');
+
+        function isRenderableOverlayImageSource(src) {
+            try {
+                const v = String(src || '').trim();
+                if (!v) return false;
+                if (/^data:image\//i.test(v)) return true;
+                if (/^https?:\/\//i.test(v)) return true;
+                if (/^(blob:|file:|\.\/|\/)/i.test(v)) return true;
+                return false;
+            } catch(e) { return false; }
+        }
+
+        function normalizeOverlayImageSource(src) {
+            try {
+                const v = String(src || '').trim();
+                return isRenderableOverlayImageSource(v) ? v : '';
+            } catch(e) { return ''; }
+        }
+
+        function applySafeImageSource(target, primarySrc, fallbackSrc) {
+            try {
+                const el = (typeof target === 'string') ? document.getElementById(target) : target;
+                if (!el) return '';
+                const safePrimary = normalizeOverlayImageSource(primarySrc);
+                const safeFallback = normalizeOverlayImageSource(fallbackSrc);
+                const chosen = safePrimary || safeFallback || '';
+                const fallbackOnly = safeFallback || '';
+                if (!el.__safeImageHandlerAttached) {
+                    el.__safeImageHandlerAttached = true;
+                    el.addEventListener('error', function() {
+                        try {
+                            const fb = normalizeOverlayImageSource(el.dataset.fallbackSrc || '');
+                            if (fb && el.src !== fb) {
+                                el.src = fb;
+                                return;
+                            }
+                            el.removeAttribute('src');
+                        } catch(err) {
+                            try { el.removeAttribute('src'); } catch(_) {}
+                        }
+                    });
+                }
+                if (fallbackOnly) el.dataset.fallbackSrc = fallbackOnly;
+                else delete el.dataset.fallbackSrc;
+                if (!chosen) {
+                    el.removeAttribute('src');
+                    return '';
+                }
+                if (el.getAttribute('src') === chosen) return chosen;
+                el.src = chosen;
+                return chosen;
+            } catch(e) { return ''; }
+        }
+        const confetti = document.getElementById('confetti');
+
+        window.createChampionConfetti = function() {
+            try {
+                if (!confetti) return;
+                confetti.innerHTML = '';
+                const colors = ['gold', 'green', 'white'];
+                for (let i = 0; i < 70; i++) {
+                    const piece = document.createElement('div');
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = 170 + Math.random() * 520;
+                    const dx = Math.cos(angle) * distance;
+                    const dy = Math.sin(angle) * distance + 220 + Math.random() * 200;
+                    const rot = (-540 + Math.random() * 1080) + 'deg';
+                    piece.className = 'piece ' + color;
+                    piece.style.setProperty('--dx', dx + 'px');
+                    piece.style.setProperty('--dy', dy + 'px');
+                    piece.style.setProperty('--rot', rot);
+                    piece.style.animationDuration = (3.8 + Math.random() * 2.4) + 's';
+                    piece.style.animationDelay = (Math.random() * 0.35) + 's';
+                    const w = 6 + Math.random() * 7;
+                    const h = 12 + Math.random() * 18;
+                    piece.style.width = w + 'px';
+                    piece.style.height = h + 'px';
+                    confetti.appendChild(piece);
+                }
+            } catch(e) {}
+        };
+
+        window.__champNormalizeHex = function(hex) {
+            try {
+                let v = String(hex || '').trim();
+                if (!v) return '#cda63c';
+                if (v[0] !== '#') v = '#' + v;
+                if (v.length === 4) v = '#' + v[1]+v[1] + v[2]+v[2] + v[3]+v[3];
+                return /^#[0-9a-fA-F]{6}$/.test(v) ? v : '#cda63c';
+            } catch(e) { return '#cda63c'; }
+        };
+
+        window.__champHexToRgb = function(hex) {
+            try {
+                const v = window.__champNormalizeHex(hex).replace('#','');
+                return { r: parseInt(v.slice(0,2), 16), g: parseInt(v.slice(2,4), 16), b: parseInt(v.slice(4,6), 16) };
+            } catch(e) { return { r:205, g:166, b:60 }; }
+        };
+
+        window.__champTextColorFromBg = function(hex) {
+            try {
+                const rgb = window.__champHexToRgb(hex);
+                const luminance = ((0.299 * rgb.r) + (0.587 * rgb.g) + (0.114 * rgb.b)) / 255;
+                return luminance > 0.6 ? '#102216' : '#FFFFFF';
+            } catch(e) { return '#FFFFFF'; }
+        };
+
+        window.applyChampionData = function(payload, data) {
+            try {
+                const d = data || {};
+                const cd = payload || {};
+                const side = (cd.side === 'fora') ? 'fora' : 'casa';
+                const teamData = d && d[side] ? d[side] : null;
+                const crest = cd.crest || (teamData ? teamData.logo : '') || '';
+                const championship = cd.championship || (d && d.global ? d.global.league : '') || '';
+                const barColor = window.__champNormalizeHex(cd.barColor || (teamData && teamData.corData ? (teamData.corData.c1 || teamData.corData.cor1) : '') || '#cda63c');
+                const textColor = cd.textColor || window.__champTextColorFromBg(barColor);
+
+                const crestEl = document.getElementById('teamCrest');
+                const champNameEl = document.getElementById('championshipName');
+                const titleBarEl = document.getElementById('championTitleBar');
+                const titleTextEl = document.getElementById('championTitleText');
+
+                if (crestEl) applySafeImageSource(crestEl, crest, '');
+                if (champNameEl) champNameEl.innerText = String(championship || '').toUpperCase();
+                if (titleBarEl) titleBarEl.style.background = barColor;
+                if (titleTextEl) titleTextEl.style.color = textColor;
+            } catch(e) {}
+        };
+
+        window.showChampion = function() {
+            try {
+                if (!championWrap) return;
+                championWrap.classList.remove('hide', 'show');
+                void championWrap.offsetWidth;
+                championWrap.classList.add('show');
+                window.createChampionConfetti && window.createChampionConfetti();
+            } catch(e) {}
+        };
+
+        window.hideChampion = function() {
+            try {
+                if (!championWrap) return;
+                championWrap.classList.remove('show');
+                championWrap.classList.add('hide');
+            } catch(e) {}
+        };
+
+        window.replayChampion = function() {
+            try {
+                if (!championWrap) return;
+                championWrap.classList.remove('show', 'hide');
+                void championWrap.offsetWidth;
+                championWrap.classList.add('show');
+                window.createChampionConfetti && window.createChampionConfetti();
+            } catch(e) {}
+        };
+    }
+} catch(e) {}
+/* === /PATCH: Overlay Campeão === */
+
+
+    </script>
+
+
+    <div id="container-penaltis">
+        <div class="penalty-strip"><div class="dots-area" id="pen-dots-home"></div><div class="badge-container"><div class="match-badge" id="pen-badge-text">PÊNALTIS</div></div><div class="dots-area" id="pen-dots-away"></div></div>
+        <div class="main-board"><div class="team-name-area"><div class="team-name" id="pen-name-home">CASA</div></div><div class="center-score-area"><img src="" class="team-logo" id="pen-logo-home"><div class="score-box"><div class="score-text" id="pen-score-text">0 - 0</div></div><img src="" class="team-logo" id="pen-logo-away"></div><div class="team-name-area"><div class="team-name" id="pen-name-away">FORA</div></div></div>
+    </div>
+
+    <div id="container-escalacao">
+        <div class="lineup-content" id="lineup-box">
+            <div class="l-sidebar"><div class="l-crest"><img id="L_ESCUDO" src=""></div><div class="l-teamname" id="L_NOME">TIME</div><div class="l-coach-name" id="L_TECNICO">NOME TÉCNICO</div><div class="l-formation-label" id="L_TATICA">4-4-2</div></div>
+            <div class="l-main-area">
+                <div class="slider-wrapper mode-list" id="slider-wrapper">
+                    <div class="view-list"><div class="list-header">TITULARES</div><div id="lista-jogadores" style="flex:1; display:flex; flex-direction:column; justify-content:center;"></div></div>
+                    <div class="view-pitch"><div class="pitch-lines"><div class="pitch-half"></div><div class="pitch-circle"></div><div class="pitch-box-top"></div><div class="pitch-box-btm"></div></div><div id="campo-jogadores"></div></div>
+                    <div class="view-reserves"><div class="list-header">RESERVAS</div><div id="lista-reservas" style="flex:1; display:flex; flex-direction:column; justify-content:center;"></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay-card"><div id="card-elemento"><div id="card-bar"></div><div id="card-crest"><img id="card-crestImg"></div><div class="card-content"><div class="card-line1"><div class="card-num" id="card-tNum"></div><div class="card-name" id="card-tName"></div></div><div class="card-label" id="card-tLabel"></div></div></div></div>
+    <div id="overlay-sub"><div id="sub-anim-container"><div class="sub-bars-structure"><div class="sub-crest-internal"><img id="sub-crest-img"></div><div class="sub-text-wrapper" id="sub-text-wrapper"><div class="sub-text-row top-pos"><div class="sub-info"><div class="sub-num" id="sub-out-num"></div><div id="sub-out-name"></div><i class="fa-solid fa-caret-down sub-arrow" style="color:#ef4444;"></i></div></div><div class="sub-text-row btm-pos"><div class="sub-info"><div class="sub-num" id="sub-in-num"></div><div id="sub-in-name"></div><i class="fa-solid fa-caret-up sub-arrow" style="color:#22c55e;"></i></div></div></div></div></div></div>
+    <div id="container-arbitragem"><div class="arb-card"><div class="arb-header">EQUIPE DE ARBITRAGEM</div><div class="arb-body"><div class="arb-row"><div class="arb-label"><i class="fas fa-user"></i> Árbitro</div><div class="arb-name" id="out-arb-princ"></div></div><div class="arb-row"><div class="arb-label"><i class="fas fa-flag"></i> Assistente 1</div><div class="arb-name" id="out-arb-ass1"></div></div><div class="arb-row"><div class="arb-label"><i class="fas fa-flag"></i> Assistente 2</div><div class="arb-name" id="out-arb-ass2"></div></div><div class="arb-row" id="row-arb-4th"><div class="arb-label"><i class="fas fa-stopwatch"></i> 4º Árbitro</div><div class="arb-name" id="out-arb-4th"></div></div><div class="arb-row" id="row-arb-var"><div class="arb-label"><i class="fas fa-tv"></i> VAR</div><div class="arb-name" id="out-arb-var"></div></div></div></div></div>
+    <img src="LOGO.png" class="logo-tv" alt="Logo TV">
+
+    <script>
+        const channel = new BroadcastChannel('placar_channel');
+
+// --- FIX: garantir que a LOWER (créditos) comece 100% escondida (sem vazamento) ---
+(function __hardHideCreditsLowerOnBoot(){
+    try {
+        const low = document.getElementById('overlay-lower');
+        if(!low) return;
+        low.classList.remove('visible');
+        low.classList.remove('saindo');
+        low.style.animation = 'none';
+        low.style.display = 'none';
+        low.style.left = '-10000px';
+        low.style.bottom = '-10000px';
+        low.style.visibility = 'visible';
+        low.style.opacity = '0';
+        low.style.transform = 'translateY(160px)';
+        low.style.left = '-10000px';
+        low.style.bottom = '-10000px';
+    } catch(e) {}
+})();
+
+        
+        // --- SELETORES GLOBAIS ---
+        const containerSup = document.getElementById('container-superior');
+        const placarSup = document.getElementById('placar');
+        const containerInf = document.getElementById('container-inferior');
+        const stageInf = document.getElementById('stage-inferior');
+        const containerPen = document.getElementById('container-penaltis');
+        const blocoTimes = document.getElementById('bloco-times');
+        const linhaInferior = document.getElementById('linha-inferior');
+        const logoTv = document.querySelector('.logo-tv');
+        
+        // --- SELETORES ESCALAÇÃO ---
+        const lineupBox = document.getElementById('lineup-box');
+        const slider = document.getElementById('slider-wrapper');
+        const listaDiv = document.getElementById('lista-jogadores');
+        const listaResDiv = document.getElementById('lista-reservas');
+        const campoDiv = document.getElementById('campo-jogadores');
+
+        let segundosTotais = 0; let timerInterval = null; let isTimerRunning = false;
+        let clockMode = 'EU'; // EU: 0–90 (padrão atual) | BR: 0–45 por tempo + período
+        let jogoPeriodo = '1ºT';
+        let t1, t2, t3, t4;
+        let activeLineupSide = null; let activeLineupMode = null;
+
+        // --- DADOS DE FORMAÇÃO TÁTICA ---
+        const formations = {
+            '4-4-2 A': [{b:15,l:50}, {b:25,l:15}, {b:25,l:38}, {b:25,l:62}, {b:25,l:85}, {b:48,l:50}, {b:60,l:30}, {b:60,l:70}, {b:72,l:50}, {b:78,l:35}, {b:78,l:65}],
+            '4-4-2 B': [{b:15,l:50}, {b:25,l:15}, {b:25,l:38}, {b:25,l:62}, {b:25,l:85}, {b:52,l:30}, {b:52,l:70}, {b:68,l:30}, {b:68,l:70}, {b:78,l:35}, {b:78,l:65}],
+            '4-2-3-1': [{b:15,l:50}, {b:25,l:15}, {b:25,l:38}, {b:25,l:62}, {b:25,l:85}, {b:45,l:35}, {b:45,l:65}, {b:65,l:20}, {b:65,l:50}, {b:65,l:80}, {b:85,l:50}],
+            '4-3-3 A': [{b:15,l:50}, {b:25,l:15}, {b:25,l:38}, {b:25,l:62}, {b:25,l:85}, {b:48,l:50}, {b:60,l:30}, {b:60,l:70}, {b:75,l:15}, {b:80,l:50}, {b:75,l:85}],
+            '4-3-3 B': [{b:15,l:50}, {b:25,l:15}, {b:25,l:38}, {b:25,l:62}, {b:25,l:85}, {b:50,l:35}, {b:50,l:65}, {b:65,l:50}, {b:80,l:20}, {b:80,l:50}, {b:80,l:80}],
+            '3-5-2':   [{b:15,l:50}, {b:25,l:30}, {b:25,l:50}, {b:25,l:70}, {b:50,l:15}, {b:50,l:85}, {b:45,l:40}, {b:45,l:60}, {b:65,l:50}, {b:78,l:35}, {b:78,l:65}],
+            '5-3-2':   [{b:15,l:50}, {b:25,l:10}, {b:25,l:30}, {b:25,l:50}, {b:25,l:70}, {b:25,l:90}, {b:50,l:30}, {b:50,l:50}, {b:50,l:70}, {b:75,l:40}, {b:75,l:60}],
+            '4-1-4-1': [{b:15,l:50}, {b:25,l:15}, {b:25,l:38}, {b:25,l:62}, {b:25,l:85}, {b:40,l:50}, {b:60,l:15}, {b:60,l:38}, {b:60,l:62}, {b:60,l:85}, {b:80,l:50}],
+            'DEFAULT': [{b:15,l:50}, {b:30,l:20},{b:30,l:40},{b:30,l:60},{b:30,l:80}, {b:60,l:20},{b:60,l:40},{b:60,l:60},{b:60,l:80}, {b:80,l:40},{b:80,l:60}]
+        };
+
+        function resetAllTimers() { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); }
+
+        // ____________________________________________________________________________________
+        // --- FUNÇÕES DE UPDATE GERAL ---
+        // ____________________________________________________________________________________
+        function setColors(d) {
+            if(d.global.bg1) document.documentElement.style.setProperty('--bg-1', d.global.bg1);
+            if(d.global.bg2) document.documentElement.style.setProperty('--bg-2', d.global.bg2);
+            if(d.global.bg3) document.documentElement.style.setProperty('--bg-3', d.global.bg3);
+            if(d.global.bg4) document.documentElement.style.setProperty('--bg-4', d.global.bg4); 
+            if(d.global.txt1) document.documentElement.style.setProperty('--txt-1', d.global.txt1);
+            if(d.global.txt2) document.documentElement.style.setProperty('--txt-2', d.global.txt2);
+            if(d.global.txt3) document.documentElement.style.setProperty('--txt-3', d.global.txt3);
+
+            document.getElementById('intro-league').innerText = d.global.league;
+            document.getElementById('intro-phase').innerText = d.global.phase;
+            document.getElementById('intro-stadium').innerText = d.global.stadium;
+            document.getElementById('intro-name-home').innerText = d.casa.nome;
+            applySafeImageSource('intro-shield-home', d.casa.logo, document.getElementById('intro-shield-home').getAttribute('src') || '');
+            document.getElementById('intro-name-away').innerText = d.fora.nome;
+            applySafeImageSource('intro-shield-away', d.fora.logo, document.getElementById('intro-shield-away').getAttribute('src') || '');
+            
+            document.getElementById('ps-strip-home').style.background = generateStripBackground(d.casa.corData);
+            document.getElementById('ps-strip-away').style.background = generateStripBackground(d.fora.corData);
+            if(d.global.logoTV) applySafeImageSource(logoTv, d.global.logoTV, '');
+        
+
+
+/* === PATCH: Lower GOL & ENTREVISTA (padrão B, 5s auto, cores via CSS vars) === */
+try {
+    // 1) Inject CSS 1x (somente usando vars)
+    if (!document.getElementById('style-extra-lowers')) {
+        const st = document.createElement('style');
+        st.id = 'style-extra-lowers';
+        st.textContent = `
+            /* Lower Eventos (clones do padrão #overlay-lower) */
+            .overlay-event-lower {
+                position: fixed;
+                left: 80px;
+                bottom: 80px;
+                z-index: 4550;
+                pointer-events: none;
+                opacity: 0;
+                transform: translateY(100px);
+                transition: all 0.6s cubic-bezier(0.2, 1, 0.3, 1);
+            }
+            .overlay-event-lower.visible { opacity: 1; transform: translateY(0); }
+
+            .event-lower-bar { display:flex; align-items: center; gap: 12px; transform: scale(0.9); transform-origin: bottom left; }
+            .event-crest-box {
+                width: 70px; height: 70px;
+                background: #fff;
+                border-radius: 4px;
+                display:flex; align-items:center; justify-content:center;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.45);
+                overflow:hidden;
+            }
+            .event-crest-box img { width: 100%; height: 100%; object-fit: contain; }
+
+            .event-info { display:flex; flex-direction: column; align-items: flex-start; }
+            .event-name-box {
+                background: var(--bg-gradient);
+                padding: 10px 25px;
+                border-left: 6px solid var(--bg-2);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+                display:flex; align-items:center; gap: 10px;
+            }
+            .event-name {
+                font-size: 32px;
+                font-weight: 900;
+                color: var(--txt-2);
+                text-transform: uppercase;
+                line-height: 1;
+            }
+            .event-icon {
+                font-size: 26px;
+                color: var(--txt-2);
+                line-height: 1;
+                flex: 0 0 auto;
+            }
+            .event-role-box {
+                background: var(--bg-2);
+                padding: 5px 15px;
+                margin-left: 20px;
+                margin-top: -5px;
+                transform: translateY(0);
+                z-index: -1;
+                display:flex; align-items:center;
+            }
+            .event-role {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--txt-1);
+                text-transform: uppercase;
+                line-height: 1.1;
+            }
+        `;
+        document.head.appendChild(st);
+    }
+
+    // 2) Create DOM 1x
+    if (!document.getElementById('overlay-goal-lower')) {
+        const wrap = document.createElement('div');
+        wrap.id = 'overlay-goal-lower';
+        wrap.className = 'overlay-event-lower';
+
+        wrap.innerHTML = `
+            <div class="event-lower-bar">
+                <div class="event-crest-box"><img id="goal-lower-crest" src="" alt=""></div>
+                <div class="event-info">
+                    <div class="event-name-box">
+                        <i class="fa-solid fa-futbol event-icon" aria-hidden="true"></i>
+                        <span class="event-name" id="goal-lower-name">GOL</span>
+                    </div>
+                    <div class="event-role-box">
+                        <span class="event-role" id="goal-lower-role">TIME</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(wrap);
+    }
+
+    if (!document.getElementById('overlay-interview-lower')) {
+        const wrap = document.createElement('div');
+        wrap.id = 'overlay-interview-lower';
+        wrap.className = 'overlay-event-lower';
+
+        wrap.innerHTML = `
+            <div class="event-lower-bar">
+                <div class="event-crest-box"><img id="interview-lower-crest" src="" alt=""></div>
+                <div class="event-info">
+                    <div class="event-name-box">
+                        <i class="fa-solid fa-microphone event-icon" aria-hidden="true"></i>
+                        <span class="event-name" id="interview-lower-name">ENTREVISTA</span>
+                    </div>
+                    <div class="event-role-box">
+                        <span class="event-role" id="interview-lower-role">TIME</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(wrap);
+    }
+} catch(e) {}
+/* === /PATCH: Lower GOL & ENTREVISTA === */
+
+
+
+/* === PATCH: Lower PÓS-JOGO (modelo fiel, barras desalinhadas, 2 bases de escudo) === */
+try {
+    // 1) CSS (1x) - sem hardcode de cor do placar: usa vars já setadas pelo setColors (ex.: --bg-2)
+    if (!document.getElementById('style-postmatch-lower')) {
+        const stPM = document.createElement('style');
+        stPM.id = 'style-postmatch-lower';
+        stPM.textContent = `
+            #overlay-postmatch-lower{
+                position:fixed;
+                left:70px;
+                bottom:72px;
+                z-index:4600;
+                pointer-events:none;
+            }
+            #overlay-postmatch-lower .pm-topbar{
+                display:inline-flex;
+                align-items:center;
+                background: var(--bg-2);
+                height:58px;
+                padding:0 22px;
+                font-weight:800;
+                font-size:34px;
+                color:#fff;
+                text-transform:uppercase;
+                border:0; outline:0; box-shadow:none;
+                transform:translateX(-1600px);
+                transition:transform 500ms ease;
+                will-change:transform;
+            }
+            #overlay-postmatch-lower .pm-bottom{
+                margin-top:10px;
+                margin-left:42px; /* BARRA DE BAIXO COMEÇA DEPOIS DA DE CIMA */
+                width:1280px;
+                height:86px;
+                display:grid;
+                grid-template-columns:190px 1fr;
+                border:0; outline:0; box-shadow:none;
+                transform:translateX(-1600px);
+                transition:transform 500ms ease;
+                transition-delay:250ms;
+                will-change:transform;
+            }
+            #overlay-postmatch-lower.visible .pm-topbar{ transform:translateX(0); }
+            #overlay-postmatch-lower.visible .pm-bottom{ transform:translateX(0); }
+
+            #overlay-postmatch-lower .pm-logos{
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                gap:12px;
+                padding:0 14px;
+                box-sizing:border-box;
+                border:0; outline:0; box-shadow:none;
+            }
+            #overlay-postmatch-lower .pm-logo-base{
+                width:74px;
+                height:74px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                border:0; outline:0; box-shadow:none;
+                border-radius:0;
+            }
+            #overlay-postmatch-lower .pm-logo-base img{
+                width:64px;
+                height:64px;
+                object-fit:contain;
+                display:block;
+                border:0; outline:0;
+            }
+            #overlay-postmatch-lower .pm-headline{
+                background:#0E1B2A;
+                display:flex;
+                align-items:center;
+                padding:0 24px;
+                color:#fff;
+                font-size:22px;
+                font-style:italic;
+                text-transform:uppercase;
+                border:0; outline:0; box-shadow:none;
+                overflow:hidden;
+            }
+            #overlay-postmatch-lower .pm-headline span{
+                display:block;
+                white-space:nowrap;
+                overflow:hidden;
+                text-overflow:ellipsis;
+            }
+        `;
+        document.head.appendChild(stPM);
+    }
+
+    // 2) DOM (1x)
+    if (!document.getElementById('overlay-postmatch-lower')) {
+        const wrapPM = document.createElement('div');
+        wrapPM.id = 'overlay-postmatch-lower';
+
+        wrapPM.innerHTML = `
+            <div class="pm-topbar" id="pm-placar">PLACAR</div>
+            <div class="pm-bottom" id="pm-bottomBar">
+                <div class="pm-logos" id="pm-logosWrap">
+                    <div class="pm-logo-base" id="pm-base-home"><img id="pm-crest-home" src="" alt=""></div>
+                    <div class="pm-logo-base" id="pm-base-away"><img id="pm-crest-away" src="" alt=""></div>
+                </div>
+                <div class="pm-headline"><span id="pm-headline-text">MANCHETE</span></div>
+            </div>
+        `;
+        document.body.appendChild(wrapPM);
+    }
+} catch(e) {}
+/* === /PATCH: Lower PÓS-JOGO === */
+
+
+/* === PATCH: PostMatch Lower FIX v2 (bases emendadas + fonte manchete maior) === */
+try {
+    // CSS overrides (1x)
+    if (!document.getElementById('style-postmatch-lower-fix')) {
+        const stPM2 = document.createElement('style');
+        stPM2.id = 'style-postmatch-lower-fix';
+        stPM2.textContent = `
+            /* Bases dos escudos com mesma altura da barra inferior e emendadas */
+            #overlay-postmatch-lower .pm-bottom{ grid-template-columns:190px 1fr; }
+            #overlay-postmatch-lower .pm-logos{
+                height:86px;
+                padding:0;
+                gap:0;
+                align-items:stretch;
+                justify-content:flex-start;
+            }
+            #overlay-postmatch-lower .pm-logo-base{
+                width:95px;
+                height:86px;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+            }
+            #overlay-postmatch-lower .pm-logo-base img{ width:64px; height:64px; }
+
+            /* Manchete maior e mais “cheia” na barra */
+            #overlay-postmatch-lower .pm-headline{
+                font-size:28px;
+                line-height:1.1;
+                padding:0 28px;
+                font-weight:600;
+            }
+        `;
+        document.head.appendChild(stPM2);
+    }
+} catch(e) {}
+/* === /PATCH: PostMatch Lower FIX v2 === */
+
+
+    // === PATCH v3: aumentar escala do texto da manchete do pós-jogo ===
+    if (!document.getElementById('style-postmatch-lower-v3')) {
+        const stPM3 = document.createElement('style');
+        stPM3.id = 'style-postmatch-lower-v3';
+        stPM3.textContent = `
+            #overlay-postmatch-lower .pm-headline{
+                font-size:28px;
+                line-height:1.15;
+            }
+        `;
+        document.head.appendChild(stPM3);
+    }
+
+
+
+// === PATCH v4 (POSTMATCH) ===
+// - Barra da manchete usa BG1
+// - Logo TV dentro da margem de segurança e alinhada com a lower
+(function(){
+  try{
+    if(!document.getElementById('style-postmatch-v4')){
+      var st=document.createElement('style');
+      st.id='style-postmatch-v4';
+      st.textContent = `
+        /* PATCH v4: manchete com BG1 */
+        #overlay-postmatch-lower .headline,
+        #overlay-postmatch-lower .pm-headline,
+        #overlay-postmatch-lower [data-pm="headline"]{
+          background: var(--bg-1) !important;
+        }
+        /* PATCH v4: logo TV no safe e alinhada com a lower */
+        .logo-tv{
+          right: 70px !important;
+          bottom: 72px !important;
+        }
+      `;
+      document.head.appendChild(st);
+    }
+  }catch(e){}
+})();
+
+/* === POSTMATCH TEXT COLORS (v5) - use global txt colors === */
+(function(){
+  try{
+    const STYLE_ID = 'style-postmatch-textcolors-v5';
+    if(!document.getElementById(STYLE_ID)){
+      const st = document.createElement('style');
+      st.id = STYLE_ID;
+      st.textContent = `
+        /* placar (barra de cima) usa TXT1 global */
+        #overlay-postmatch-lower .topbar{ color: var(--txt-1, #FFFFFF) !important; }
+        /* manchete (barra de baixo) usa TXT2 global */
+        #overlay-postmatch-lower .headline{ color: var(--txt-2, #FFFFFF) !important; }
+      `;
+      document.head.appendChild(st);
+    }
+  }catch(e){}
+})();
+
+
+
+  /* === PATCH v6: Lower Pós-Jogo - texto configurável via TXT globais === */
+  try {
+    if (!window.__pm_textcolors_global_v6) {
+      window.__pm_textcolors_global_v6 = true;
+      var st = document.getElementById('pm-textcolors-global-v6');
+      if (!st) {
+        st = document.createElement('style');
+        st.id = 'pm-textcolors-global-v6';
+        st.textContent = `
+          /* Placares/Títulos em fundo colorido/escuro: usar TXT 2 (CLARO) */
+          #overlay-postmatch-lower .pm-topbar { color: var(--txt-2, #FFFFFF) !important; }
+          #overlay-postmatch-lower .pm-headline { color: var(--txt-2, #FFFFFF) !important; }
+        `;
+        document.head.appendChild(st);
+      }
+    }
+  } catch(e) {}
+  /* === /PATCH v6 === */
+
+
+/* === PATCH v7: Auto-contraste TXT1/TXT2 baseado em BG1/BG2 === */
+try {
+  (function(){
+    const root = document.documentElement;
+    const cs = getComputedStyle(root);
+    const bg1 = (cs.getPropertyValue('--bg-1') || '').trim();
+    const bg2 = (cs.getPropertyValue('--bg-2') || '').trim();
+    const txt1 = (cs.getPropertyValue('--txt-1') || '').trim() || '#000000';
+    const txt2 = (cs.getPropertyValue('--txt-2') || '').trim() || '#FFFFFF';
+
+    function clamp(n){ return Math.max(0, Math.min(255, n)); }
+    function parseColorToRgb(c){
+      if(!c) return null;
+      c = (''+c).trim();
+      // hex
+      if(c[0] === '#'){
+        let h = c.slice(1);
+        if(h.length === 3){
+          const r = parseInt(h[0]+h[0],16), g = parseInt(h[1]+h[1],16), b = parseInt(h[2]+h[2],16);
+          if([r,g,b].some(n => Number.isNaN(n))) return null;
+          return {r, g, b};
+        }
+        if(h.length === 6){
+          const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+          if([r,g,b].some(n => Number.isNaN(n))) return null;
+          return {r, g, b};
+        }
+        return null;
+      }
+      // rgb/rgba
+      const m = c.match(/^rgba?\(([^)]+)\)$/i);
+      if(m){
+        const parts = m[1].split(',').map(s => s.trim());
+        if(parts.length >= 3){
+          const r = clamp(parseFloat(parts[0]));
+          const g = clamp(parseFloat(parts[1]));
+          const b = clamp(parseFloat(parts[2]));
+          if([r,g,b].some(n => Number.isNaN(n))) return null;
+          return {r, g, b};
+        }
+      }
+      return null;
+    }
+    function isLight(bg){
+      const rgb = parseColorToRgb(bg);
+      if(!rgb) return false; // fallback: trate como escuro
+      // luminância perceptual (0..255)
+      const lum = (0.299*rgb.r + 0.587*rgb.g + 0.114*rgb.b);
+      return lum >= 155;
+    }
+
+    const topColor = isLight(bg2) ? txt1 : txt2;      // placar em BG2
+    const headColor = isLight(bg1) ? txt1 : txt2;     // manchete em BG1
+
+    const topEl = document.querySelector('#overlay-postmatch-lower .pm-topbar');
+    const headEl = document.querySelector('#overlay-postmatch-lower .pm-headline');
+
+    if(topEl){
+      topEl.style.setProperty('color', topColor, 'important');
+      topEl.style.setProperty('text-shadow', ((topColor.toLowerCase() === txt2.toLowerCase()) ? '0 1px 2px rgba(0,0,0,0.55)' : '0 1px 2px rgba(255,255,255,0.20)'), 'important');
+    }
+    if(headEl){
+      headEl.style.setProperty('color', headColor, 'important');
+      headEl.style.setProperty('text-shadow', ((headColor.toLowerCase() === txt2.toLowerCase()) ? '0 1px 2px rgba(0,0,0,0.55)' : '0 1px 2px rgba(255,255,255,0.20)'), 'important');
+    }
+  })();
+} catch(e) {}
+/* === /PATCH v7 === */
+
+/* === PATCH v8: AUTO CONTRASTE (corrige BG em gradiente/var) === */
+try {
+  (function(){
+    const root = document.documentElement;
+    const cs = getComputedStyle(root);
+
+    function readVar(name){
+      return (cs.getPropertyValue(name) || '').trim();
+    }
+    function resolveVar(value, depth){
+      depth = depth || 0;
+      if(!value || depth > 4) return value;
+      const v = (''+value).trim();
+      const m = v.match(/^var\(\s*(--[a-zA-Z0-9_-]+)\s*(?:,([^)]*))?\)$/);
+      if(m){
+        const nm = m[1];
+        const fallback = (m[2] || '').trim();
+        const got = readVar(nm);
+        return resolveVar(got || fallback, depth+1);
+      }
+      return v;
+    }
+
+    function clamp(n){ return Math.max(0, Math.min(255, n)); }
+
+    function firstColorToken(str){
+      if(!str) return '';
+      const s = (''+str).trim();
+      // Se for gradiente, pega a primeira cor encontrada (hex ou rgb/rgba)
+      if(/gradient/i.test(s)){
+        const mHex = s.match(/#(?:[0-9a-f]{3}|[0-9a-f]{6})\b/i);
+        if(mHex) return mHex[0];
+        const mRgb = s.match(/rgba?\([^)]+\)/i);
+        if(mRgb) return mRgb[0];
+        return '';
+      }
+      return s;
+    }
+
+    function parseColorToRgb(c){
+      if(!c) return null;
+      c = resolveVar(c);
+      c = firstColorToken(c);
+      if(!c) return null;
+      c = (''+c).trim();
+
+      // hex
+      if(c[0] === '#'){
+        let h = c.slice(1);
+        if(h.length === 3){
+          const r = parseInt(h[0]+h[0],16), g = parseInt(h[1]+h[1],16), b = parseInt(h[2]+h[2],16);
+          if([r,g,b].some(n => Number.isNaN(n))) return null;
+          return {r, g, b};
+        }
+        if(h.length === 6){
+          const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+          if([r,g,b].some(n => Number.isNaN(n))) return null;
+          return {r, g, b};
+        }
+        return null;
+      }
+
+      // rgb/rgba
+      const m = c.match(/^rgba?\(([^)]+)\)$/i);
+      if(m){
+        const parts = m[1].split(',').map(s => s.trim());
+        if(parts.length >= 3){
+          const r = clamp(parseFloat(parts[0]));
+          const g = clamp(parseFloat(parts[1]));
+          const b = clamp(parseFloat(parts[2]));
+          if([r,g,b].some(n => Number.isNaN(n))) return null;
+          return {r, g, b};
+        }
+      }
+      return null;
+    }
+
+    function isLight(bg){
+      const rgb = parseColorToRgb(bg);
+      if(!rgb) return null; // desconhecido
+      const lum = (0.299*rgb.r + 0.587*rgb.g + 0.114*rgb.b);
+      return lum >= 155;
+    }
+
+    const bg1Raw = readVar('--bg-1');
+    const bg2Raw = readVar('--bg-2');
+    const txt1 = readVar('--txt-1') || '#000000';
+    const txt2 = readVar('--txt-2') || '#FFFFFF';
+
+    // Decide por BG; se não der pra medir, tenta medir pela cor computada do elemento (quando possível)
+    function decideTextFor(bgRaw, element){
+      let light = isLight(bgRaw);
+      if(light === null && element){
+        const ec = getComputedStyle(element);
+        // tenta pelo background-color real do elemento
+        const bc = (ec.backgroundColor || '').trim();
+        light = isLight(bc);
+      }
+      if(light === null){
+        // fallback: mantém TXT2 (claro) com sombra forte
+        return { color: txt2, shadow: '0 1px 2px rgba(0,0,0,0.55)' };
+      }
+      if(light){
+        return { color: txt1, shadow: '0 1px 2px rgba(255,255,255,0.20)' };
+      }
+      return { color: txt2, shadow: '0 1px 2px rgba(0,0,0,0.55)' };
+    }
+
+    const topEl = document.querySelector('#overlay-postmatch-lower .pm-topbar');
+    const headEl = document.querySelector('#overlay-postmatch-lower .pm-headline');
+
+    const topPick = decideTextFor(bg2Raw, topEl);
+    const headPick = decideTextFor(bg1Raw, headEl);
+
+    if(topEl){
+      topEl.style.setProperty('color', topPick.color, 'important');
+      topEl.style.setProperty('text-shadow', topPick.shadow, 'important');
+    }
+    if(headEl){
+      headEl.style.setProperty('color', headPick.color, 'important');
+      headEl.style.setProperty('text-shadow', headPick.shadow, 'important');
+    }
+  })();
+} catch(e) {}
+/* === /PATCH v8 === */
+
+}
+
+        function generateStripBackground(cData) {
+            if (!cData) return "#000"; 
+            if (typeof cData === 'string') return cData;
+            const tipo = cData.tipo; const c1 = cData.c1 || "#000"; const c2 = cData.c2 || "#fff"; const c3 = cData.c3 || "#f00";
+            if (tipo === "2") return `linear-gradient(to bottom, ${c1} 50%, ${c2} 50%)`;
+            else if (tipo === "3") return `linear-gradient(to bottom, ${c1} 33.33%, ${c2} 33.33%, ${c2} 66.66%, ${c3} 66.66%)`;
+            else return c1;
+        }
+
+        // ____________________________________________________________________________________
+        // --- FUNÇÕES DE ESCALAÇÃO ---
+        // ____________________________________________________________________________________
+        function setupView(teamData, mode) {
+            if(!lineupBox.classList.contains('ativo')) { slider.className = 'slider-wrapper mode-list'; }
+            applySafeImageSource('L_ESCUDO', teamData.logo, '');
+            document.getElementById('L_NOME').innerText = teamData.nome;
+            document.getElementById('L_TECNICO').innerText = teamData.lineup.coach;
+
+            // TITULARES
+            listaDiv.innerHTML = '';
+            const players = teamData.lineup.players || [];
+            players.slice(0, 11).forEach(p => { listaDiv.innerHTML += `<div class="l-row"><div class="l-num">${p.num}</div><div class="l-name">${p.name}</div></div>`; });
+
+            // CAMPO
+            campoDiv.innerHTML = '';
+            let rawTatic = teamData.lineup.tactic || "4-4-2";
+            if(rawTatic === "4-4-2") rawTatic = "4-4-2 A"; if(rawTatic === "4-3-3") rawTatic = "4-3-3 A";
+            document.getElementById('L_TATICA').innerText = rawTatic;
+            const coords = formations[rawTatic] || formations['DEFAULT'];
+            players.slice(0,11).forEach((p, i) => {
+                if(!coords[i]) return;
+                const pos = coords[i]; const dot = document.createElement('div'); dot.className = 'tac-player'; dot.style.bottom = pos.b + '%'; dot.style.left = pos.l + '%';
+                dot.innerHTML = `<div class="tac-dot" style="background:var(--bg-2); color:var(--txt-1);">${p.num}</div><div class="tac-name">${p.name}</div>`;
+                campoDiv.appendChild(dot);
+            });
+
+            // RESERVAS
+            listaResDiv.innerHTML = '';
+            const reserves = players.slice(11);
+            if(reserves.length > 0) { reserves.forEach(p => { listaResDiv.innerHTML += `<div class="l-row"><div class="l-num">${p.num}</div><div class="l-name">${p.name}</div></div>`; }); } else { listaResDiv.innerHTML = '<div style="text-align:center; color:var(--txt-2); margin-top:20px; font-weight:bold;">SEM RESERVAS CADASTRADOS</div>'; }
+
+            lineupBox.classList.add('ativo');
+            setTimeout(() => {
+                slider.className = 'slider-wrapper';
+                if(mode === 'pitch') slider.classList.add('mode-pitch'); else if (mode === 'reserves') slider.classList.add('mode-reserves'); else slider.classList.add('mode-list');
+            }, 50);
+        
+
+            /* === PATCH: AGREGADO + INDICADOR DE VERMELHOS (PLACAR) === */
+            try {
+                // CSS (somente para elementos novos)
+                if (!document.getElementById('patch-agg-reds-style')) {
+                    const st = document.createElement('style');
+                    st.id = 'patch-agg-reds-style';
+                    st.textContent = `
+                        #box-home, #box-away { position: relative; }
+                        .reds-indicator { position:absolute; top:-18px; left:50%; transform:translateX(-50%); display:flex; gap:4px; pointer-events:none; }
+                        .reds-indicator .red-dot { width:10px; height:14px; background:#d40000; border-radius:2px; box-shadow:0 0 0 2px rgba(0,0,0,.18); }
+                        .agg-box { background: var(--bg-2); color: var(--txt-1); height:100%; padding: 0 14px; display:flex; align-items:center; justify-content:center;
+                                  font-weight:900; font-size: 22px; letter-spacing: 1px; text-transform: uppercase; }
+                        .agg-box.hidden { display:none; }
+                    `;
+                    document.head.appendChild(st);
+                }
+
+                // Containers dos cartões (1..4) acima das barras
+                const bHome = document.getElementById('box-home');
+                const bAway = document.getElementById('box-away');
+                if (bHome && !document.getElementById('reds-home')) {
+                    const d = document.createElement('div');
+                    d.id = 'reds-home';
+                    d.className = 'reds-indicator';
+                    bHome.appendChild(d);
+                }
+                if (bAway && !document.getElementById('reds-away')) {
+                    const d = document.createElement('div');
+                    d.id = 'reds-away';
+                    d.className = 'reds-indicator';
+                    bAway.appendChild(d);
+                }
+
+                // Box do agregado: entra depois do time 2 (antes do timer), empurrando o resto
+                const linha = document.getElementById('linha-inferior');
+                if (linha && !document.getElementById('agg-box')) {
+                    const agg = document.createElement('div');
+                    agg.id = 'agg-box';
+                    agg.className = 'agg-box hidden';
+                    agg.textContent = '0 - 0';
+
+                    // insere antes do primeiro timer-box (se existir)
+                    const first = linha.querySelector('.timer-box') || linha.firstElementChild;
+                    if (first) linha.insertBefore(agg, first);
+                    else linha.appendChild(agg);
+                }
+            } catch(e) {}
+            /* === /PATCH: AGREGADO + INDICADOR DE VERMELHOS (PLACAR) === */
+}
+
+        // ____________________________________________________________________________________
+        // --- FUNÇÕES DE PÊNALTIS ---
+        // ____________________________________________________________________________________
+        function updatePenaltyOverlay(d) {
+            if (!d.penalty) return; const p = d.penalty;
+            document.getElementById('pen-name-home').innerText = d.casa.nome; document.getElementById('pen-name-away').innerText = d.fora.nome;
+            applySafeImageSource('pen-logo-home', d.casa.logo, ''); applySafeImageSource('pen-logo-away', d.fora.logo, '');
+            if(p.badgeText) document.getElementById('pen-badge-text').innerText = p.badgeText;
+            const resA = p.results.A || []; const resB = p.results.B || [];
+            const sA = resA.filter(r => r === 'gol').length; const sB = resB.filter(r => r === 'gol').length;
+            document.getElementById('pen-score-text').innerText = `${sA} - ${sB}`;
+            let activeStep = (p.ended && p.step > 0) ? p.step - 1 : p.step;
+            const pageIndex = Math.floor((activeStep / 2) / 5); const baseRound = pageIndex * 5;
+            const turnTeam = (p.step % 2 === 0) ? p.starter : (p.starter === 'A' ? 'B' : 'A');
+            const roundIdx = Math.floor(p.step / 2);
+            const mapContainer = { 'A': document.getElementById('pen-dots-home'), 'B': document.getElementById('pen-dots-away') };
+            ['A', 'B'].forEach(team => {
+                const container = mapContainer[team]; if (!container) return; container.innerHTML = '';
+                const currentRes = p.results[team] || [];
+                for (let i = 0; i < 5; i++) {
+                    const idx = baseRound + i; const res = currentRes[idx]; const div = document.createElement('div'); div.className = 'dot'; 
+                    if (res === 'gol') div.classList.add('dot-goal'); else if (res === 'miss') div.classList.add('dot-miss');
+                    if (!p.ended && team === turnTeam && idx === roundIdx) { div.classList.add('dot-active'); }
+                    div.innerText = idx + 1; container.appendChild(div);
+                }
+            });
+        }
+
+        // ____________________________________________________________________________________
+        // --- FUNÇÕES DE PLACAR ---
+        // ____________________________________________________________________________________
+        function toggleNomes(forcarExpandir = null) {
+            const boxes = document.querySelectorAll('.name-box');
+            let isExpanding = !boxes[0].classList.contains('expandido');
+            if (forcarExpandir !== null) isExpanding = forcarExpandir;
+            if (isExpanding) { blocoTimes.classList.remove('travado'); blocoTimes.classList.add('base-expandida'); boxes.forEach(box => { const txt = box.querySelector('.team-name'); box.classList.add('expandido'); setTimeout(() => { txt.innerText = box.getAttribute('data-nome'); }, 50); }); } else { blocoTimes.classList.remove('base-expandida'); blocoTimes.classList.add('travado'); boxes.forEach(box => { const txt = box.querySelector('.team-name'); box.classList.remove('expandido'); setTimeout(() => { txt.innerText = box.getAttribute('data-sigla'); }, 50); }); }
+            boxes.forEach(box => {
+                const txt = box.querySelector('.team-name');
+                box.style.justifyContent = 'center';
+                box.style.textAlign = 'center';
+                box.style.paddingLeft = isExpanding ? '8px' : '10px';
+                box.style.paddingRight = isExpanding ? '8px' : '10px';
+                if (txt) {
+                    txt.style.display = 'block';
+                    txt.style.width = '100%';
+                    txt.style.textAlign = 'center';
+                    txt.style.lineHeight = '1';
+                    txt.style.letterSpacing = isExpanding ? '0px' : '0.5px';
+                    txt.style.fontSize = isExpanding ? '30px' : '36px';
+                }
+            });
+            const scoreHome = document.getElementById('ps-score-home');
+            const scoreAway = document.getElementById('ps-score-away');
+            const boxPeriodo = document.getElementById('box-periodo');
+            if (scoreHome) scoreHome.style.fontSize = '38px';
+            if (scoreAway) scoreAway.style.fontSize = '38px';
+            if (boxPeriodo) boxPeriodo.style.fontSize = '26px';
+            // se o merchan estiver visível, o placar pode ter mudado de largura
+            updateMerchanLayout(true);
+        
+
+/* PATCH MERCHAN HIDE ON EXPAND */
+try {
+    var merchan = document.getElementById('merchan-content');
+    if (merchan) {
+        // detecta se esta expandindo ou recolhendo pelo estado do container
+        var container = document.getElementById('placar-container');
+        var expandido = container && container.classList.contains('expandido');
+
+        if (!window.__merchanWasVisible) {
+            window.__merchanWasVisible = merchan.classList.contains('visible');
+        }
+
+        if (expandido) {
+            // ao expandir -> esconde merchan
+            merchan.classList.remove('visible');
+            merchan.style.display = 'none';
+        } else {
+            // ao recolher -> restaura se estava visivel antes
+            if (window.__merchanWasVisible) {
+                merchan.classList.add('visible');
+                merchan.style.display = '';
+            }
+        }
+    }
+} catch(e){}
+/* FIM PATCH MERCHAN HIDE ON EXPAND */
+
+
+
+/* PATCH MERCHAN MASK HIDE ON EXPAND */
+try {
+    var mask = document.getElementById('merchan-mask');
+    if (mask) {
+        var container2 = document.getElementById('placar-container');
+        var expandido2 = container2 && container2.classList.contains('expandido');
+
+        if (expandido2) {
+            // ao expandir -> mata a sombra independente do restante do sistema
+            mask.classList.remove('visible');
+            mask.style.display = 'none';
+            mask.style.visibility = 'hidden';
+            mask.style.opacity = '0';
+            mask.style.pointerEvents = 'none';
+        } else {
+            // ao recolher -> devolve para o CSS controlar
+            mask.style.display = '';
+            mask.style.visibility = '';
+            mask.style.opacity = '';
+            mask.style.pointerEvents = '';
+        }
+    }
+} catch(e){}
+/* FIM PATCH MERCHAN MASK HIDE ON EXPAND */
+
+
+
+/* PATCH PF MERCHAN SYNC FIX (RESPEITA TIMING DO PLACAR + NÃO QUEBRA TRANSIÇÃO) */
+try {
+    const __pf_containerFix = document.getElementById('placar-container');
+    const __pf_expandedNow = !!(typeof blocoTimes !== 'undefined' && blocoTimes && blocoTimes.classList && blocoTimes.classList.contains('base-expandida'));
+
+    // mantém o estado "expandido" coerente para patches existentes
+    if (__pf_containerFix && __pf_containerFix.classList) {
+        if (__pf_expandedNow) __pf_containerFix.classList.add('expandido');
+        else __pf_containerFix.classList.remove('expandido');
+    }
+
+    const __pf_merchanFix = document.getElementById('merchan-content');
+    if (__pf_merchanFix) {
+        // nunca usar display:none aqui (isso corta a animação de translateY do CSS)
+        try { if (__pf_merchanFix.style && __pf_merchanFix.style.display === 'none') __pf_merchanFix.style.display = ''; } catch(e) {}
+
+        // se estamos recolhendo o placar (toggleNomes(false)), NÃO permitir "restore" do merchan por patch
+        if (!isExpanding) {
+            try { __pf_merchanFix.classList.remove('visible'); } catch(e) {}
+            try { window.__merchanWasVisible = false; } catch(e) {}
+        } else {
+            // se estamos expandindo, garante que ele não apareça antes do delay do show_merchan (800ms)
+            try { __pf_merchanFix.classList.remove('visible'); } catch(e) {}
+        }
+    }
+
+    const __pf_maskFix = document.getElementById('merchan-mask');
+    if (__pf_maskFix) {
+        // mantém a máscara presente (display ''), evitando "piscadas" / entrada torta
+        try { if (__pf_maskFix.style && __pf_maskFix.style.display === 'none') __pf_maskFix.style.display = ''; } catch(e) {}
+    }
+} catch(e) {}
+/* FIM PATCH PF MERCHAN SYNC FIX */
+}
+        function renderInferior(data, textoTopo) { stageInf.innerHTML = `<div class="lowerbar" id="placar-inf-elemento"><div class="topbar">${textoTopo}</div><div class="mainrow"><div class="side home">${data.casa.nome}</div><div class="shield-box"><img id="inferior-home-crest" src="" alt=""></div><div class="center-score-low"><span>${data.casa.gols}</span>-<span>${data.fora.gols}</span></div><div class="shield-box"><img id="inferior-away-crest" src="" alt=""></div><div class="side away">${data.fora.nome}</div></div></div>`; applySafeImageSource('inferior-home-crest', data.casa.logo, document.getElementById('inferior-home-crest') ? (document.getElementById('inferior-home-crest').getAttribute('src') || '') : ''); applySafeImageSource('inferior-away-crest', data.fora.logo, document.getElementById('inferior-away-crest') ? (document.getElementById('inferior-away-crest').getAttribute('src') || '') : ''); requestAnimationFrame(() => containerInf.classList.add('ativo')); }
+        
+        function renderStatus(texto, data) { 
+            esconderInferior(); 
+            setTimeout(() => { 
+                const titulo = (data.global && data.global.league) ? data.global.league : "STATUS"; 
+                stageInf.innerHTML = `<div class="lowerbar" id="placar-inf-elemento"><div class="topbar">${titulo}</div><div class="mainrow"><div class="side home">${data.casa.nome}</div><div class="shield-box"><img id="inferior-home-crest" src="" alt=""></div><div class="center-score-low"><span class="center-text-low">${texto}</span></div><div class="shield-box"><img id="inferior-away-crest" src="" alt=""></div><div class="side away">${data.fora.nome}</div></div></div>`; applySafeImageSource('inferior-home-crest', data.casa.logo, ''); applySafeImageSource('inferior-away-crest', data.fora.logo, ''); 
+                requestAnimationFrame(() => containerInf.classList.add('ativo')); 
+            }, 300); 
+        }
+
+        function esconderInferior() { const el = document.getElementById('placar-inf-elemento'); if(el) { el.classList.add('saindo'); setTimeout(() => { containerInf.classList.remove('ativo'); stageInf.innerHTML = ''; }, 800); } }
+
+        function renderOutrosJogosOverlay(payload, data) {
+            const card = document.getElementById('overlay-outros-jogos-card');
+            if (!card) return;
+            const pd = payload || ((data && data.outrosJogos) ? data.outrosJogos : {}) || {};
+            const current = pd.selectedGame || ((pd.jogos && typeof pd.selectedIndex === 'number' && pd.jogos[pd.selectedIndex]) ? pd.jogos[pd.selectedIndex] : null) || {};
+            const team1 = String(current.team1 || 'TIME 1').toUpperCase();
+            const team2 = String(current.team2 || 'TIME 2').toUpperCase();
+            const local = String(current.local || 'LOCAL').toUpperCase();
+            const hora = String(current.hora || 'HORÁRIO').toUpperCase();
+            const status = String(current.status || 'EM ANDAMENTO').toUpperCase();
+            const score1 = Math.max(0, parseInt(current.score1 || 0, 10) || 0);
+            const score2 = Math.max(0, parseInt(current.score2 || 0, 10) || 0);
+            card.innerHTML = `<div class="topbar">${local} - ${hora}</div><div class="mainrow oj-mainrow"><div class="oj-side home"><span>${team1}</span></div><div class="oj-score center-score-low"><span>${score1}</span><span>-</span><span>${score2}</span></div><div class="oj-side away"><span>${team2}</span></div></div><div class="oj-statusbar">${status}</div>`;
+        }
+
+        function showOutrosJogosOverlay(payload, data) {
+            const host = document.getElementById('overlay-outros-jogos');
+            const card = document.getElementById('overlay-outros-jogos-card');
+            if (!host || !card) return;
+            renderOutrosJogosOverlay(payload, data);
+            card.classList.remove('saindo');
+            host.classList.remove('visible');
+            host.style.display = 'flex';
+            host.style.justifyContent = 'center';
+            host.style.left = '0';
+            host.style.width = '100%';
+            host.offsetHeight;
+            host.classList.add('visible');
+        }
+
+        function hideOutrosJogosOverlay() {
+            const host = document.getElementById('overlay-outros-jogos');
+            const card = document.getElementById('overlay-outros-jogos-card');
+            if (!host || !card) return;
+            card.classList.add('saindo');
+            setTimeout(() => {
+                try {
+                    host.classList.remove('visible');
+                    host.style.display = 'none';
+                    card.classList.remove('saindo');
+                    card.innerHTML = '';
+                } catch(e) {}
+            }, 620);
+        }
+        function mostrarSuperior(data) {
+            const boxHome = document.getElementById('box-home'); const boxAway = document.getElementById('box-away');
+            boxHome.dataset.sigla = data.casa.sigla; boxHome.dataset.nome = data.casa.nome; boxAway.dataset.sigla = data.fora.sigla; boxAway.dataset.nome = data.fora.nome;
+            boxHome.querySelector('.team-name').innerText = data.casa.sigla; boxAway.querySelector('.team-name').innerText = data.fora.sigla;
+            document.getElementById('ps-score-home').innerText = data.casa.gols; document.getElementById('ps-score-away').innerText = data.fora.gols;
+            boxHome.style.justifyContent = 'center';
+            boxAway.style.justifyContent = 'center';
+            boxHome.style.textAlign = 'center';
+            boxAway.style.textAlign = 'center';
+            boxHome.style.paddingLeft = '10px';
+            boxHome.style.paddingRight = '10px';
+            boxAway.style.paddingLeft = '10px';
+            boxAway.style.paddingRight = '10px';
+            const txtHome = boxHome.querySelector('.team-name');
+            const txtAway = boxAway.querySelector('.team-name');
+            if (txtHome) {
+                txtHome.style.display = 'block';
+                txtHome.style.width = '100%';
+                txtHome.style.textAlign = 'center';
+                txtHome.style.lineHeight = '1';
+                txtHome.style.letterSpacing = '0.5px';
+                txtHome.style.fontSize = '36px';
+            }
+            if (txtAway) {
+                txtAway.style.display = 'block';
+                txtAway.style.width = '100%';
+                txtAway.style.textAlign = 'center';
+                txtAway.style.lineHeight = '1';
+                txtAway.style.letterSpacing = '0.5px';
+                txtAway.style.fontSize = '36px';
+            }
+            const scoreHome = document.getElementById('ps-score-home');
+            const scoreAway = document.getElementById('ps-score-away');
+            const boxPeriodo = document.getElementById('box-periodo');
+            if (scoreHome) scoreHome.style.fontSize = '38px';
+            if (scoreAway) scoreAway.style.fontSize = '38px';
+            if (boxPeriodo) boxPeriodo.style.fontSize = '26px';
+            setColors(data); placarSup.classList.remove('saindo'); blocoTimes.classList.remove('base-expandida'); void blocoTimes.offsetWidth; containerSup.classList.add('ativo'); placarSup.classList.add('entrando'); setTimeout(() => { linhaInferior.classList.add('animar'); updateMerchanLayout(true); }, 100);
+        }
+        function esconderSuperior() { placarSup.classList.remove('entrando'); placarSup.classList.add('saindo'); setTimeout(() => { containerSup.classList.remove('ativo'); }, 800); }
+        function atualizarTimerDisplay() {
+            let displaySecs = segundosTotais;
+            if(clockMode === 'BR') {
+                displaySecs = Math.max(0, segundosTotais);
+            }
+            if(clockMode === 'EU') {
+                if (jogoPeriodo === '2ºT') {
+                    displaySecs = Math.max(0, segundosTotais + 2700);
+                } else {
+                    displaySecs = Math.max(0, segundosTotais);
+                }
+            }
+            const m = Math.floor(displaySecs / 60).toString().padStart(2, '0');
+            const s = (displaySecs % 60).toString().padStart(2, '0');
+            document.getElementById('tempo').innerText = `${m}:${s}`;
+        }
+        function startTimer() { if (!isTimerRunning) { isTimerRunning = true; timerInterval = setInterval(() => { segundosTotais++; atualizarTimerDisplay(); }, 1000); } 
+
+/* === PATCH PLAYPAUSE: Pausa/Retoma Cronômetro === */
+try {
+    if (typeof window.clockPaused === 'undefined') window.clockPaused = false;
+
+    // Se o timer já estiver rodando, troca o intervalo por um que respeita a pausa
+    if (isTimerRunning && timerInterval) {
+        try { clearInterval(timerInterval); } catch(e) {}
+        timerInterval = setInterval(() => {
+            if (!window.clockPaused) {
+                segundosTotais++;
+                atualizarTimerDisplay();
+            }
+        }, 1000);
+    }
+} catch(e) {}
+/* === /PATCH PLAYPAUSE === */
+}
+        function stopTimer() { isTimerRunning = false; clearInterval(timerInterval); 
+
+/* === PATCH PLAYPAUSE: Pausa/Retoma Cronômetro === */
+try {
+    if (typeof window.clockPaused === 'undefined') window.clockPaused = false;
+    window.clockPaused = false;
+} catch(e) {}
+/* === /PATCH PLAYPAUSE === */
+}
+
+        function setClockModeFromData(d) {
+            clockMode = (d && d.clockMode === 'BR') ? 'BR' : 'EU';
+            // atualiza texto do período (somente BR mostra)
+            const perEl = document.getElementById('texto-periodo');
+            if(perEl) perEl.innerText = jogoPeriodo;
+            updateMerchanLayout(true);
+        }
+            updateMerchanLayout(true);
+
+
+        
+        // Ajusta o posicionamento/tamanho da publicidade (merchan) conforme o modo e a largura real do placar.
+        // EU: mantém o layout original. BR: acompanha a largura total do placar (inclui timer + período/acréscimo).
+        function updateMerchanLayout(forceRecalc = false) {
+            const mask = document.getElementById('merchan-mask');
+            const placarEl = document.getElementById('placar');
+            if (!mask || !placarEl) return;
+
+            const applyNow = () => {
+                if (clockMode === 'BR') {
+                    // mesma largura do placar inteiro
+                    const w = Math.ceil(placarEl.scrollWidth || placarEl.getBoundingClientRect().width || 710);
+                    const h = Math.ceil(placarEl.offsetHeight || 55);
+                    mask.style.width = w + 'px';
+                    // encosta logo abaixo do placar (mantém o efeito de "cair" por trás)
+                    mask.style.top = Math.max(0, h - 5) + 'px';
+                } else {
+                    // EU: mantém a base original e soma apenas os blocos extras realmente visíveis
+                    const aggBox = document.getElementById('agg-box');
+                    const boxEU = document.getElementById('box-acrescimo');
+                    let w = 711; // compensação fina do encaixe base no modo europeu
+
+                    if (aggBox && !aggBox.classList.contains('hidden')) {
+                        w += Math.ceil(aggBox.getBoundingClientRect().width || aggBox.offsetWidth || 0);
+                    }
+
+                    if (boxEU && boxEU.classList.contains('ativo')) {
+                        w += Math.ceil(boxEU.getBoundingClientRect().width || boxEU.offsetWidth || 0);
+                    }
+
+                    mask.style.width = w + 'px';
+                    mask.style.top = '50px';
+                }
+            };
+
+            applyNow();
+            if (forceRecalc) {
+                requestAnimationFrame(applyNow);
+                setTimeout(applyNow, 180);
+                setTimeout(applyNow, 420);
+                setTimeout(applyNow, 800);
+            }
+        
+
+/* PATCH PF MERCHAN SHADOW GUARD UNIQUE */
+try {
+    const __pf_containerX = document.getElementById('placar-container');
+    const __pf_expandidoX = !!(__pf_containerX && __pf_containerX.classList && __pf_containerX.classList.contains('expandido'));
+
+    const __pf_maskX = document.getElementById('merchan-mask');
+    const __pf_imgX  = document.getElementById('img-merchan');
+
+    if (__pf_expandidoX) {
+        // enquanto estiver expandido, nunca deixa a sombra do merchan aparecer
+        if (__pf_maskX) {
+            try { __pf_maskX.classList.remove('visible'); } catch(e) {}
+            __pf_maskX.style.display = 'none';
+            __pf_maskX.style.visibility = 'hidden';
+            __pf_maskX.style.opacity = '0';
+            __pf_maskX.style.pointerEvents = 'none';
+        }
+        if (__pf_imgX) {
+            // guarda a sombra inline original apenas uma vez
+            if (typeof window.__pf_merchanOrigBoxShadow === 'undefined') {
+                window.__pf_merchanOrigBoxShadow = __pf_imgX.style.boxShadow || '';
+            }
+            __pf_imgX.style.boxShadow = 'none';
+        }
+    } else {
+        // volta ao comportamento normal quando não estiver expandido
+        if (__pf_maskX) {
+            __pf_maskX.style.display = '';
+            __pf_maskX.style.visibility = '';
+            __pf_maskX.style.opacity = '';
+            __pf_maskX.style.pointerEvents = '';
+        }
+        if (__pf_imgX) {
+            if (typeof window.__pf_merchanOrigBoxShadow !== 'undefined') {
+                __pf_imgX.style.boxShadow = window.__pf_merchanOrigBoxShadow;
+            } else {
+                __pf_imgX.style.boxShadow = '';
+            }
+        }
+    }
+} catch(e) {}
+/* FIM PATCH PF MERCHAN SHADOW GUARD UNIQUE */
+
+
+
+/* PATCH PF MERCHAN HIDE IMG WHEN NOT VISIBLE */
+try {
+    const __pf_merchanContentX = document.getElementById('merchan-content');
+    const __pf_imgMerchanX = document.getElementById('img-merchan');
+
+    const __pf_isMerchanVisibleX = !!(__pf_merchanContentX && __pf_merchanContentX.classList && __pf_merchanContentX.classList.contains('visible'));
+
+    if (__pf_imgMerchanX) {
+        // guarda display original inline apenas uma vez
+        if (typeof window.__pf_merchanOrigDisplay === 'undefined') {
+            window.__pf_merchanOrigDisplay = __pf_imgMerchanX.style.display || '';
+        }
+
+        if (!__pf_isMerchanVisibleX) {
+            // enquanto NÃO estiver visível, evita sombra residual: some com a imagem após a transição
+            if (typeof window.__pf_merchanHideTimer !== 'undefined') {
+                try { clearTimeout(window.__pf_merchanHideTimer); } catch(e) {}
+            }
+            window.__pf_merchanHideTimer = setTimeout(() => {
+                try {
+                    const __pf_mc2 = document.getElementById('merchan-content');
+                    const __pf_img2 = document.getElementById('img-merchan');
+                    const __pf_vis2 = !!(__pf_mc2 && __pf_mc2.classList && __pf_mc2.classList.contains('visible'));
+                    if (__pf_img2 && !__pf_vis2) {
+                        // garante que não sobra box-shadow nem nada
+                        __pf_img2.style.boxShadow = 'none';
+                        __pf_img2.style.display = 'none';
+                    }
+                } catch(e) {}
+            }, 900);
+        } else {
+            // se está visível, garante que a imagem está ligada (o show_merchan já define display:block)
+            try { __pf_imgMerchanX.style.display = 'block'; } catch(e) {}
+        }
+    }
+} catch(e) {}
+/* FIM PATCH PF MERCHAN HIDE IMG WHEN NOT VISIBLE */
+
+
+
+/* PATCH PF MERCHAN TIMING RESTORE (MASK ON) */
+try {
+    const __pf_maskR = document.getElementById('merchan-mask');
+    const __pf_imgR  = document.getElementById('img-merchan');
+    const __pf_mcR   = document.getElementById('merchan-content');
+
+    // 1) GARANTE que a mascara exista para a animação original (não desliga a janela)
+    if (__pf_maskR) {
+        __pf_maskR.style.display = '';
+        __pf_maskR.style.visibility = '';
+        __pf_maskR.style.opacity = '';
+        __pf_maskR.style.pointerEvents = '';
+    }
+
+    // 2) Cancela qualquer timer antigo que escondia a imagem (isso quebra o timing)
+    if (typeof window.__pf_merchanHideTimer !== 'undefined') {
+        try { clearTimeout(window.__pf_merchanHideTimer); } catch(e) {}
+        try { window.__pf_merchanHideTimer = undefined; } catch(e) {}
+    }
+
+    // 3) Corrige APENAS a sombra residual: remove box-shadow quando NÃO estiver visível
+    const __pf_isVisibleR = !!(__pf_mcR && __pf_mcR.classList && __pf_mcR.classList.contains('visible'));
+
+    if (__pf_imgR) {
+        if (typeof window.__pf_merchanOrigBoxShadow2 === 'undefined') {
+            window.__pf_merchanOrigBoxShadow2 = __pf_imgR.style.boxShadow || '';
+        }
+
+        if (__pf_isVisibleR) {
+            __pf_imgR.style.boxShadow = window.__pf_merchanOrigBoxShadow2;
+            // nunca força display aqui (deixa o sistema original controlar)
+        } else {
+            __pf_imgR.style.boxShadow = 'none';
+            // NÃO altera display aqui, para não quebrar a animação (entrada/saída suave)
+        }
+    }
+} catch(e) {}
+/* FIM PATCH PF MERCHAN TIMING RESTORE (MASK ON) */
+
+}
+
+function updateClockBoxes(d) {
+            const boxEU = document.getElementById('box-acrescimo');
+            const boxPer = document.getElementById('box-periodo');
+            const boxBR = document.getElementById('box-acrescimo-br');
+
+            const acrTxtEU = document.getElementById('texto-acrescimo');
+            const acrTxtBR = document.getElementById('texto-acrescimo-br');
+
+            const acrVal = (d && d.acrescimoVal !== undefined) ? d.acrescimoVal : 0;
+            const acrShow = !!(d && d.acrescimoShow);
+
+            if(acrTxtEU) acrTxtEU.innerText = '+' + acrVal;
+            if(acrTxtBR) acrTxtBR.innerText = '+' + acrVal;
+
+            if(clockMode === 'BR') {
+                // BR: mostra período no lugar do acrescimo EU, e acrescimo BR usa BG2
+                if(boxPer) boxPer.classList.add('ativo');
+                if(boxEU) boxEU.classList.remove('ativo');
+                if(boxBR) { if(acrShow) boxBR.classList.add('ativo'); else boxBR.classList.remove('ativo'); }
+            } else {
+                // EU: padrão atual
+                if(boxPer) boxPer.classList.remove('ativo');
+                if(boxBR) boxBR.classList.remove('ativo');
+                if(boxEU) { if(acrShow) boxEU.classList.add('ativo'); else boxEU.classList.remove('ativo'); }
+            }
+
+            updateMerchanLayout(true);
+
+            atualizarTimerDisplay();
+        
+
+            /* === PATCH V2: GARANTIA DOM + ESTILO (AGREGADO + VERMELHOS) === */
+            try {
+                // Inicializa apenas 1 vez (não depende de escalação)
+                if (!window.__aggRedsPatchV2Init) {
+                    window.__aggRedsPatchV2Init = true;
+
+                    // Estilo (override do patch antigo, sem mexer no CSS original)
+                    if (!document.getElementById('patch-agg-reds-style-v2')) {
+                        const st2 = document.createElement('style');
+                        st2.id = 'patch-agg-reds-style-v2';
+                        st2.textContent = `
+                            /* Vermelhos: ficam DENTRO da caixa de nome (sem top negativo, sem sumir por overflow) */
+                            #box-home, #box-away { position: relative; }
+                            .reds-indicator { 
+                                position:absolute !important; 
+                                top: 6px !important; 
+                                left: 50% !important; 
+                                transform: translateX(-50%) !important; 
+                                display:flex; 
+                                gap:4px; 
+                                pointer-events:none; 
+                                z-index: 999;
+                            }
+                            .reds-indicator .red-dot { 
+                                width:10px; height:14px; 
+                                background:#d40000; 
+                                border-radius:2px; 
+                                box-shadow:0 0 0 2px rgba(0,0,0,.18); 
+                            }
+
+                            /* Agregado: segue o miolo do placar (caixa do score) */
+                            .agg-box { 
+                                background: var(--bg-4) !important; 
+                                color: var(--txt-3) !important; 
+                                height: 100% !important;
+                                min-width: 64px;
+                                padding: 0 14px !important; 
+                                display:flex; 
+                                align-items:center; 
+                                justify-content:center; 
+                                font-weight:900; 
+                                font-size: 28px !important; 
+                                letter-spacing: 0px; 
+                                text-transform: none !important;
+                            }
+                            .agg-box.hidden { display:none !important; }
+                        `;
+                        document.head.appendChild(st2);
+                    }
+                }
+
+                // Garantir containers no DOM (se ainda não existirem)
+                const bHome2 = document.getElementById('box-home');
+                const bAway2 = document.getElementById('box-away');
+                if (bHome2 && !document.getElementById('reds-home')) {
+                    const el = document.createElement('div');
+                    el.id = 'reds-home';
+                    el.className = 'reds-indicator';
+                    bHome2.appendChild(el);
+                }
+                if (bAway2 && !document.getElementById('reds-away')) {
+                    const el = document.createElement('div');
+                    el.id = 'reds-away';
+                    el.className = 'reds-indicator';
+                    bAway2.appendChild(el);
+                }
+
+                const linha2 = document.getElementById('linha-inferior');
+                if (linha2 && !document.getElementById('agg-box')) {
+                    const agg2 = document.createElement('div');
+                    agg2.id = 'agg-box';
+                    agg2.className = 'agg-box hidden';
+                    agg2.textContent = '0 - 0';
+
+                    // insere antes do primeiro timer-box (se existir)
+                    const first2 = linha2.querySelector('.timer-box') || linha2.firstElementChild;
+                    if (first2) linha2.insertBefore(agg2, first2);
+                    else linha2.appendChild(agg2);
+                }
+            } catch(e) {}
+            /* === /PATCH V2: GARANTIA DOM + ESTILO (AGREGADO + VERMELHOS) === */
+
+
+            /* === PATCH: UPDATE AGREGADO + VERMELHOS (PLACAR) === */
+            try {
+                const clamp04 = (n) => Math.max(0, Math.min(4, parseInt(n || 0, 10) || 0));
+
+                // --- Vermelhos ---
+                const redsH = clamp04(d && d.global ? d.global.redsHome : 0);
+                const redsA = clamp04(d && d.global ? d.global.redsAway : 0);
+
+                const rh = document.getElementById('reds-home');
+                const ra = document.getElementById('reds-away');
+
+                const renderReds = (el, count) => {
+                    if (!el) return;
+                    if (count <= 0) { el.innerHTML = ''; return; }
+                    let html = '';
+                    for (let i=0;i<count;i++) html += '<span class="red-dot"></span>';
+                    el.innerHTML = html;
+                };
+                renderReds(rh, redsH);
+                renderReds(ra, redsA);
+
+                // --- Agregado ---
+                const aggBox = document.getElementById('agg-box');
+                const enabled = !!(d && d.global && d.global.agregadoEnabled);
+                const baseH = (d && d.global) ? (parseInt(d.global.agregadoBaseCasa||0,10)||0) : 0;
+                const baseA = (d && d.global) ? (parseInt(d.global.agregadoBaseFora||0,10)||0) : 0;
+
+                if (aggBox) {
+                    if (!enabled) {
+                        aggBox.classList.add('hidden');
+                    } else {
+                        // soma automática com os gols atuais
+                        const gH = (d && d.casa) ? (parseInt(d.casa.gols||0,10)||0) : 0;
+                        const gA = (d && d.fora) ? (parseInt(d.fora.gols||0,10)||0) : 0;
+                        const aH = baseH + gH;
+                        const aA = baseA + gA;
+                        aggBox.textContent = aH + ' - ' + aA;
+                        aggBox.classList.remove('hidden');
+                    }
+                }
+            } catch(e) {}
+            /* === /PATCH: UPDATE AGREGADO + VERMELHOS (PLACAR) === */
+
+    /* === PATCH V3: Ajuste Vermelhos (em cima da barra, sem corte) === */
+    try {
+        if (!document.getElementById('patch-agg-reds-v3')) {
+            var stV3 = document.createElement('style');
+            stV3.id = 'patch-agg-reds-v3';
+            stV3.textContent = [
+                '#box-home, #box-away { overflow: visible !important; }',
+                '.reds-indicator { top: -3px !important; }'
+            ].join('\n');
+            document.head.appendChild(stV3);
+        }
+    } catch (e) {}
+
+        /* === PATCH V4: Vermelhos em cima da base + Correção Lower "vazada" === */
+        try {
+            // CSS override (injetado 1x) para posicionar vermelhos NO TOPO da base dos times
+            if (!document.getElementById('patch-agg-reds-v4')) {
+                const stV4 = document.createElement('style');
+                stV4.id = 'patch-agg-reds-v4';
+                stV4.innerHTML = `
+                    /* Âncoras: caixas de nome dos times */
+                    #box-home, #box-away { position: relative !important; overflow: visible !important; }
+
+                    /* Containers dos vermelhos: fixos no topo (fora da barra, ~3px) */
+                    #reds-home, #reds-away {
+                        position: absolute !important;
+                        top: -3px !important;
+                        display: flex !important;
+                        gap: 3px !important;
+                        z-index: 99999 !important;
+                        pointer-events: none !important;
+                    }
+                    /* CASA: canto interno (direita) */
+                    #reds-home { right: 8px !important; left: auto !important; transform: none !important; }
+                    /* FORA: canto interno (esquerda) */
+                    #reds-away { left: 8px !important; right: auto !important; transform: none !important; }
+
+                    /* Visual do "cartão" (barrinhas) */
+                    .red-dot {
+                        width: 7px !important;
+                        height: 10px !important;
+                        border-radius: 1px !important;
+                        background: #dc2626 !important;
+                        box-shadow: 0 0 0 1px rgba(0,0,0,0.35) !important;
+                    }
+                `;
+                document.head.appendChild(stV4);
+            }
+
+            // Segurança: se a lower informativa estiver "visível" sem conteúdo real, força ocultar (evita pedaço no canto)
+            const lower = document.getElementById('overlay-lower');
+            if (lower && lower.classList.contains('visible')) {
+                const ln = document.getElementById('lower-name');
+                const lr = document.getElementById('lower-role');
+                const nameTxt = (ln ? ln.textContent : '') || '';
+                const roleTxt = (lr ? lr.textContent : '') || '';
+                const n = nameTxt.trim().toUpperCase();
+                const r = roleTxt.trim().toUpperCase();
+
+                // Se estiver no placeholder padrão ou vazio, não deve aparecer
+                if (!n || !r || (n === 'NOME' && r === 'FUNÇÃO')) {
+                    lower.classList.remove('visible');
+                }
+            }
+        } catch (e) {}
+
+
+    /* === PATCH V6 — POSIÇÃO CORRETA DOS VERMELHOS + FIX LOWER === */
+
+    if(!document.getElementById('patch-reds-style-v6')){
+        const st = document.createElement('style');
+        st.id = 'patch-reds-style-v6';
+        st.innerHTML = `
+
+        /* permitir sair para cima sem cortar */
+        #box-home, #box-away{
+            overflow:visible !important;
+            position:relative;
+        }
+
+        /* container dos vermelhos */
+        .reds-indicator{
+            position:absolute !important;
+            top:-4px !important;
+            display:flex !important;
+            gap:3px !important;
+            z-index:9999 !important;
+            align-items:center;
+        }
+
+        /* lado casa */
+        #reds-home{
+            right:6px !important;
+        }
+
+        /* lado fora */
+        #reds-away{
+            left:6px !important;
+        }
+
+        /* quadrados vermelhos maiores e alinhados */
+        .red-dot{
+            width:8px !important;
+            height:8px !important;
+            background:#ff2b2b !important;
+            border-radius:2px !important;
+            display:inline-block !important;
+        }
+
+        /* garantir que lower nunca vaze */
+        #overlay-lower:not(.visible):not(.saindo){
+            display:none !important;
+            opacity:0 !important;
+            transform:translateY(160px) !important;
+        }
+
+        `;
+        document.head.appendChild(st);
+    }
+
+
+/* === PATCH V7 — OVERFLOW CORRETO (CARTÕES EM CIMA) + FIX LOWER DEFINITIVO === */
+try {
+    // Remove styles antigos para evitar conflito de overrides
+    ['patch-reds-style-v4','patch-reds-style-v5','patch-reds-style-v6','patch-reds-style-v3','patch-reds-style-v2','patch-reds-style-v1','patch-reds-style-v7',
+     'patch-lower-style-v4','patch-lower-style-v5','patch-lower-style-v6','patch-lower-style-v7'
+    ].forEach(function(id){
+        var el = document.getElementById(id);
+        if(el && el.parentNode) el.parentNode.removeChild(el);
+    });
+
+    // CSS: liberar overflow no PAI CERTO e posicionar cartões ACIMA da base
+    var stR = document.createElement('style');
+    stR.id = 'patch-reds-style-v7';
+    stR.innerHTML = `
+        /* pais que estavam cortando */
+        .name-box{ overflow: visible !important; position: relative !important; }
+        #bloco-times{ overflow: visible !important; }
+        #box-home, #box-away{ overflow: visible !important; position: relative !important; }
+
+        /* container dos vermelhos */
+        .reds-indicator{
+            position:absolute !important;
+            top:-3px !important;
+            display:flex !important;
+            gap:4px !important;
+            z-index:99999 !important;
+            align-items:center !important;
+            pointer-events:none !important;
+        }
+        #reds-home{ right:8px !important; left:auto !important; }
+        #reds-away{ left:8px !important; right:auto !important; }
+
+        /* quadrados maiores e alinhados */
+        .red-dot{
+            width:10px !important;
+            height:10px !important;
+            background:#ff2b2b !important;
+            border-radius:2px !important;
+            display:inline-block !important;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.55) !important;
+        }
+    `;
+    document.head.appendChild(stR);
+
+    // CSS: lower nunca vaza
+    var stL = document.createElement('style');
+    stL.id = 'patch-lower-style-v7';
+    stL.innerHTML = `
+        #overlay-lower:not(.visible):not(.saindo){
+            display:none !important;
+            opacity:0 !important;
+            transform: translateY(160px) !important;
+        }
+        #overlay-lower.visible,
+        #overlay-lower.saindo{
+            display:block !important;
+        }
+    `;
+    document.head.appendChild(stL);
+
+    // Garantia adicional por JS (caso algum código marque visible sem texto)
+    var lower = document.getElementById('overlay-lower');
+    if(lower){
+        var nameEl = lower.querySelector('.info-name');
+        var roleEl = lower.querySelector('.info-role');
+        var nameTxt = (nameEl && nameEl.textContent ? nameEl.textContent.trim() : '');
+        var roleTxt = (roleEl && roleEl.textContent ? roleEl.textContent.trim() : '');
+        if(lower.classList.contains('visible') && (!nameTxt && !roleTxt)){
+            lower.classList.remove('visible');
+        }
+        if(!lower.classList.contains('visible') && !lower.classList.contains('saindo')){
+            lower.style.animation = 'none';
+            lower.style.display = 'none';
+            lower.style.left = '-10000px';
+            lower.style.bottom = '-10000px';
+            lower.style.visibility = 'hidden';
+            lower.style.opacity = '0';
+            lower.style.transform = 'translateY(160px)';
+            lower.style.left = '-10000px';
+            lower.style.bottom = '-10000px';
+        } else {
+            lower.style.visibility = 'visible';
+        }
+    }
+} catch(e) {}
+/* === FIM PATCH V7 === */
+
+}
+
+        
+        // ____________________________________________________________________________________
+        // --- FUNÇÕES DE EXTRAS ---
+        // ____________________________________________________________________________________
+        function showCard(d) { const c = document.getElementById('card-elemento'); const nameEl = document.getElementById('card-tName'); document.getElementById('card-tNum').innerText = d.num; nameEl.innerText = d.name; document.getElementById('card-tLabel').innerText = d.label; applySafeImageSource('card-crestImg', d.crest, ''); document.getElementById('card-bar').style.background = d.color; nameEl.style.fontSize = '32px'; if(d.name.length > 12) nameEl.style.fontSize = '28px'; if(d.name.length > 18) nameEl.style.fontSize = '24px'; if(d.name.length > 25) nameEl.style.fontSize = '20px'; document.getElementById('overlay-card').classList.add('visible'); c.classList.remove('flyOut'); c.classList.add('flyIn'); }
+        function hideCard() { const c = document.getElementById('card-elemento'); c.classList.remove('flyIn'); c.classList.add('flyOut'); setTimeout(()=>{document.getElementById('overlay-card').classList.remove('visible');},600); }
+        function triggerSubstitution(d) { document.getElementById('sub-out-num').innerText = d.outPlayer.num; document.getElementById('sub-out-name').innerText = d.outPlayer.name; document.getElementById('sub-in-num').innerText = d.inPlayer.num; document.getElementById('sub-in-name').innerText = d.inPlayer.name; applySafeImageSource('sub-crest-img', d.teamData.logo, ''); const ov = document.getElementById('overlay-sub'); const an = document.getElementById('sub-anim-container'); const tx = document.getElementById('sub-text-wrapper'); tx.classList.remove('swapped'); ov.classList.add('visible'); an.classList.remove('flyOut'); an.classList.add('flyIn'); setTimeout(()=>{ tx.classList.add('swapped'); setTimeout(()=>{ an.classList.remove('flyIn'); an.classList.add('flyOut'); setTimeout(()=>{ ov.classList.remove('visible'); },500); },4000); },3500); }
+        function hideSubstitution() { const an = document.getElementById('sub-anim-container'); an.classList.remove('flyIn'); an.classList.add('flyOut'); setTimeout(()=>{ document.getElementById('overlay-sub').classList.remove('visible'); },500); }
+
+
+        function runGoalScoreAnimation(teamSide, scoreValue, teamName) {
+            try {
+                if (window.__goalScoreExitTO) { clearTimeout(window.__goalScoreExitTO); window.__goalScoreExitTO = null; }
+                if (window.__goalScoreApplyTO) { clearTimeout(window.__goalScoreApplyTO); window.__goalScoreApplyTO = null; }
+                if (window.__goalScoreHideTO) { clearTimeout(window.__goalScoreHideTO); window.__goalScoreHideTO = null; }
+                const isAway = teamSide === 'fora';
+                const overlay = document.getElementById(isAway ? 'goal-score-away' : 'goal-score-home');
+                const scoreEl = document.getElementById(isAway ? 'ps-score-away' : 'ps-score-home');
+                const blocoTimes = document.getElementById('bloco-times');
+                if (!overlay || !scoreEl || !blocoTimes) return;
+                const other = document.getElementById(isAway ? 'goal-score-home' : 'goal-score-away');
+                const bgEl = overlay.querySelector('.goal-score-bg');
+                const mainEl = overlay.querySelector('.goal-score-main');
+                const echoWrapEl = overlay.querySelector('.goal-score-echo-wrap');
+                const stripEl = document.getElementById(isAway ? 'ps-strip-away' : 'ps-strip-home');
+                const extractTeamColor1 = (el) => {
+                    try {
+                        if (!el) return '#ff6600';
+                        const cs = getComputedStyle(el);
+                        const bgColor = (cs.backgroundColor || '').trim();
+                        const bgImage = (cs.backgroundImage || '').trim();
+                        if (bgImage && bgImage !== 'none') {
+                            const matches = bgImage.match(/(rgba?\([^\)]+\)|#[0-9a-fA-F]{3,8})/g);
+                            if (matches && matches.length) return matches[0];
+                        }
+                        if (bgColor) return bgColor;
+                    } catch(e) {}
+                    return '#ff6600';
+                };
+                const getOffsetWithin = (el, ancestor) => {
+                    let left = 0;
+                    let top = 0;
+                    let node = el;
+                    while (node && node !== ancestor) {
+                        left += node.offsetLeft || 0;
+                        top += node.offsetTop || 0;
+                        node = node.offsetParent;
+                    }
+                    return { left, top };
+                };
+                if (other) {
+                    other.classList.remove('active', 'enter', 'exit');
+                    other.style.left = '';
+                    other.style.right = '';
+                    other.style.width = '';
+                    other.style.height = '';
+                    other.style.top = '';
+                }
+                const offsetParent = overlay.offsetParent || blocoTimes.offsetParent || document.body;
+                const blocoPos = getOffsetWithin(blocoTimes, offsetParent);
+                const spanLeft = Math.round(blocoPos.left);
+                const spanTop = Math.round(blocoPos.top);
+                const spanWidth = Math.round(blocoTimes.offsetWidth || 0);
+                const spanHeight = Math.round(blocoTimes.offsetHeight || 0);
+                const teamColor1 = extractTeamColor1(stripEl);
+                overlay.style.left = spanLeft + 'px';
+                overlay.style.right = 'auto';
+                overlay.style.width = spanWidth + 'px';
+                overlay.style.height = spanHeight + 'px';
+                overlay.style.top = spanTop + 'px';
+                overlay.style.opacity = '';
+                if (bgEl) {
+                    bgEl.style.background = teamColor1;
+                }
+                const safeTeamName = String(teamName || '').trim();
+                const goalTitle = 'GOOOOL';
+                if (mainEl) {
+                    mainEl.textContent = goalTitle;
+                    mainEl.style.justifyContent = 'center';
+                    mainEl.style.textAlign = 'center';
+                    mainEl.style.paddingLeft = '0';
+                    mainEl.style.paddingRight = '0';
+                    mainEl.style.fontSize = safeTeamName.length > 20 ? '26px' : (safeTeamName.length > 12 ? '32px' : '40px');
+                    mainEl.style.letterSpacing = safeTeamName.length > 20 ? '1px' : (safeTeamName.length > 12 ? '2px' : '3px');
+                    mainEl.title = safeTeamName || 'GOOOOL';
+                }
+                if (echoWrapEl) {
+                    echoWrapEl.style.justifyContent = 'center';
+                    echoWrapEl.style.paddingLeft = '0';
+                    echoWrapEl.style.paddingRight = '0';
+                }
+                overlay.classList.remove('exit');
+                overlay.classList.remove('enter');
+                overlay.classList.remove('active');
+                void overlay.offsetWidth;
+                overlay.classList.add('active', 'enter');
+                window.__goalScoreApplyTO = setTimeout(() => {
+                    try { scoreEl.innerText = String(scoreValue); } catch(e) {}
+                    window.__goalScoreApplyTO = null;
+                }, 850);
+                window.__goalScoreExitTO = setTimeout(() => {
+                    try {
+                        overlay.classList.remove('enter');
+                        overlay.classList.add('exit');
+                    } catch(e) {}
+                    window.__goalScoreExitTO = null;
+                }, 1900);
+                window.__goalScoreHideTO = setTimeout(() => {
+                    try {
+                        overlay.classList.remove('active', 'exit');
+                        overlay.style.left = '';
+                        overlay.style.right = '';
+                        overlay.style.width = '';
+                        overlay.style.height = '';
+                        overlay.style.top = '';
+                        if (bgEl) bgEl.style.background = '';
+                        if (mainEl) {
+                            mainEl.textContent = 'GOOOOL';
+                            mainEl.style.justifyContent = '';
+                            mainEl.style.textAlign = '';
+                            mainEl.style.paddingLeft = '';
+                            mainEl.style.paddingRight = '';
+                            mainEl.style.fontSize = '';
+                            mainEl.style.letterSpacing = '';
+                            mainEl.title = '';
+                        }
+                        if (echoWrapEl) {
+                            echoWrapEl.style.justifyContent = '';
+                            echoWrapEl.style.paddingLeft = '';
+                            echoWrapEl.style.paddingRight = '';
+                        }
+                    } catch(e) {}
+                    window.__goalScoreHideTO = null;
+                }, 2360);
+            } catch(e) {}
+        }
+
+        // ____________________________________________________________________________________
+        // --- LISTENER PRINCIPAL ---
+        // ____________________________________________________________________________________
+        channel.onmessage = (ev) => {
+            const msg = ev.data; const d = msg.data;
+
+            if (msg.type === 'update_acrescimo' || msg.type === 'update_data') {
+                setClockModeFromData(d);
+                updateClockBoxes(d);
+                
+                document.getElementById('ps-score-home').innerText = d.casa.gols; document.getElementById('ps-score-away').innerText = d.fora.gols;
+                setColors(d);
+
+                const bHome = document.getElementById('box-home'); const bAway = document.getElementById('box-away');
+                bHome.dataset.sigla = d.casa.sigla; bHome.dataset.nome = d.casa.nome; bAway.dataset.sigla = d.fora.sigla; bAway.dataset.nome = d.fora.nome;
+                const isExp = bHome.classList.contains('expandido');
+                bHome.querySelector('.team-name').innerText = isExp ? d.casa.nome : d.casa.sigla; bAway.querySelector('.team-name').innerText = isExp ? d.fora.nome : d.fora.sigla;
+
+                if(lowerEl = document.getElementById('placar-inf-elemento')) {
+                    const scoreSpans = lowerEl.querySelectorAll('.center-score-low span');
+                    if(scoreSpans.length >= 2) { scoreSpans[0].innerText = d.casa.gols; scoreSpans[1].innerText = d.fora.gols; }
+                }
+                
+                if(document.getElementById('container-arbitragem').classList.contains('visible')) {
+                     const arb = d.arbitragem; document.getElementById('out-arb-princ').innerText = arb.principal; document.getElementById('out-arb-ass1').innerText = arb.assist1; document.getElementById('out-arb-ass2').innerText = arb.assist2; document.getElementById('out-arb-4th').innerText = arb.nm4th; document.getElementById('out-arb-var').innerText = arb.nmVar;
+                }
+
+                if (activeLineupSide && activeLineupMode) { setupView(d[activeLineupSide], activeLineupMode); }
+                if (d.penalty) updatePenaltyOverlay(d);
+            }
+
+            if (msg.action === 'update_penaltis') updatePenaltyOverlay(d);
+            if (msg.action === 'show_penaltis') { updatePenaltyOverlay(d); containerPen.classList.remove('exiting'); containerPen.classList.add('show'); }
+            if (msg.action === 'hide_penaltis') { containerPen.classList.add('exiting'); setTimeout(() => { containerPen.classList.remove('show'); }, 600); }
+            if (msg.type === 'update_data') {
+                try {
+                    const ojHost = document.getElementById('overlay-outros-jogos');
+                    if (ojHost && ojHost.classList.contains('visible')) renderOutrosJogosOverlay((d && d.outrosJogos) ? d.outrosJogos : null, d);
+                } catch(e) {}
+            }
+
+            if (msg.type === 'action') {
+                /* === PATCH V8: HARD-HIDE LOWER on game actions (prevents leakage) === */
+                try {
+                    if (msg && msg.action && ['inicio_jogo','intervalo','segundo_tempo','fim_jogo','clear_all'].includes(msg.action)) {
+                        const low = document.getElementById('overlay-lower');
+                        if (low) {
+                            low.classList.remove('visible');
+                            low.classList.remove('saindo');
+                            low.style.animation = 'none';
+                            low.style.display = 'none';
+                            low.style.left = '-10000px';
+                            low.style.bottom = '-10000px';
+                            low.style.visibility = 'visible';
+                            low.style.opacity = '0';
+                            low.style.transform = 'translateY(160px)';
+        low.style.left = '-10000px';
+        low.style.bottom = '-10000px';
+                        }
+                        const ln1 = document.getElementById('lower-name');
+                        const lr1 = document.getElementById('lower-role');
+                        if (ln1) ln1.textContent = '';
+                        if (lr1) lr1.textContent = '';
+                        const qn = document.querySelector('#overlay-lower .info-name');
+                        const qr = document.querySelector('#overlay-lower .info-role');
+                        if (qn) qn.textContent = '';
+                        if (qr) qr.textContent = '';
+                    }
+                } catch(e) {}
+                /* === /PATCH V8 === */
+
+                if(['inicio_jogo','intervalo','segundo_tempo','fim_jogo','clear_all'].includes(msg.action)) resetAllTimers();
+
+                switch(msg.action) {
+                    case 'inicio_jogo': jogoPeriodo = '1ºT'; document.getElementById('texto-periodo').innerText = jogoPeriodo; segundosTotais = 0; startTimer(); renderInferior(d, "INÍCIO DE JOGO"); t1 = setTimeout(() => { esconderInferior(); t2 = setTimeout(() => { mostrarSuperior(d); t3 = setTimeout(() => { toggleNomes(true); t4 = setTimeout(() => toggleNomes(false), 5000); }, 2000); }, 1000); }, 10000); break;
+                    case 'intervalo': stopTimer(); esconderSuperior(); t1 = setTimeout(() => { renderInferior(d, "INTERVALO"); t2 = setTimeout(esconderInferior, 10000); }, 1000); break;
+                    case 'segundo_tempo': jogoPeriodo = '2ºT'; document.getElementById('texto-periodo').innerText = jogoPeriodo; segundosTotais = 0; startTimer(); renderInferior(d, "2º TEMPO"); t1 = setTimeout(() => { esconderInferior(); t2 = setTimeout(() => { mostrarSuperior(d); t3 = setTimeout(() => { toggleNomes(true); t4 = setTimeout(() => toggleNomes(false), 5000); }, 2000); }, 1000); }, 10000); break;
+                    case 'fim_jogo': stopTimer(); esconderSuperior(); t1 = setTimeout(() => { renderInferior(d, "FIM DE JOGO"); t2 = setTimeout(esconderInferior, 15000); }, 1000); break;
+
+                    case 'edit_clock_apply':
+                    case 'edit_clock_apply_pause':
+                        try {
+                            const ce = (d && d.clockEditor) ? d.clockEditor : null;
+                            const manualSecs = ce && typeof ce.totalSeconds !== 'undefined' ? Math.max(0, parseInt(ce.totalSeconds || 0, 10) || 0) : 0;
+                            clockMode = (ce && ce.mode === 'BR') ? 'BR' : 'EU';
+                            jogoPeriodo = (ce && ce.period === '2ºT') ? '2ºT' : '1ºT';
+                            document.getElementById('texto-periodo').innerText = jogoPeriodo;
+                            segundosTotais = manualSecs;
+                            stopTimer();
+                            try { window.clockPaused = (msg.action === 'edit_clock_apply_pause'); } catch(e) {}
+                            if (msg.action === 'edit_clock_apply') {
+                                startTimer();
+                            } else {
+                                atualizarTimerDisplay();
+                            }
+                            setClockModeFromData({ clockMode: clockMode });
+                            updateClockBoxes(d);
+                        } catch(e) {}
+                        break;
+
+                    case 'toggle_expandir': toggleNomes(); break;
+                    case 'toggle_placar': if(containerSup.classList.contains('ativo')) esconderSuperior(); else mostrarSuperior(d); break;
+                    case 'show_intro': document.getElementById('match-card').classList.remove('intro-exit'); document.getElementById('match-card').classList.add('intro-enter'); break;
+                    case 'hide_intro': document.getElementById('match-card').classList.remove('intro-enter'); document.getElementById('match-card').classList.add('intro-exit'); break;
+                    
+                    case 'show_lineup_home': activeLineupSide = 'casa'; activeLineupMode = 'list'; setupView(d.casa, 'list'); break;
+                    case 'show_lineup_away': activeLineupSide = 'fora'; activeLineupMode = 'list'; setupView(d.fora, 'list'); break;
+                    case 'show_tactical_home': activeLineupSide = 'casa'; activeLineupMode = 'pitch'; setupView(d.casa, 'pitch'); break;
+                    case 'show_tactical_away': activeLineupSide = 'fora'; activeLineupMode = 'pitch'; setupView(d.fora, 'pitch'); break;
+                    case 'show_reserves_home': activeLineupSide = 'casa'; activeLineupMode = 'reserves'; setupView(d.casa, 'reserves'); break;
+                    case 'show_reserves_away': activeLineupSide = 'fora'; activeLineupMode = 'reserves'; setupView(d.fora, 'reserves'); break;
+                    
+                    case 'hide_lineup': activeLineupSide = null; activeLineupMode = null; lineupBox.classList.remove('ativo'); setTimeout(()=>slider.className = 'slider-wrapper mode-list', 600); break;
+                    
+                    case 'show_card': showCard(msg.cardData); break;
+                    case 'show_outros_jogos':
+                        try { showOutrosJogosOverlay(msg.outrosJogosData || ((d && d.outrosJogos) ? d.outrosJogos : null), d); } catch(e) {}
+                        break;
+                    case 'hide_outros_jogos':
+                        try { hideOutrosJogosOverlay(); } catch(e) {}
+                        break;
+                    case 'hide_card': hideCard(); break;
+                    case 'show_sub': triggerSubstitution(msg.subData); break;
+                    case 'hide_sub': hideSubstitution(); break;
+                    
+case 'show_lower':
+    try {
+        const low = document.getElementById('overlay-lower');
+        if (low) {
+            if (window.__overlayLowerExitTO) { clearTimeout(window.__overlayLowerExitTO); window.__overlayLowerExitTO = null; }
+            low.classList.remove('saindo');
+            low.classList.remove('visible');
+
+            document.getElementById('lower-name').innerText = (msg.lowerData && msg.lowerData.name) ? msg.lowerData.name : '';
+            document.getElementById('lower-role').innerText = (msg.lowerData && msg.lowerData.role) ? msg.lowerData.role : '';
+
+            low.style.animation = 'none';
+            low.style.display = 'block';
+            low.style.left = '80px';
+            low.style.bottom = '80px';
+            low.style.visibility = 'visible';
+            low.style.opacity = '0';
+            low.style.transform = 'translateY(160px)';
+            low.offsetHeight;
+
+            requestAnimationFrame(() => {
+                low.classList.add('visible');
+                low.style.animation = 'lowerEnter 0.6s ease forwards';
+            });
+        }
+    } catch(e) {}
+    break;
+
+                    
+case 'hide_lower':
+    try {
+        const low = document.getElementById('overlay-lower');
+        if (low) {
+            if (window.__overlayLowerExitTO) { clearTimeout(window.__overlayLowerExitTO); }
+            low.classList.remove('visible');
+            low.classList.add('saindo');
+            low.style.display = 'block';
+            low.style.left = '80px';
+            low.style.bottom = '80px';
+            low.style.visibility = 'visible';
+            low.style.animation = 'none';
+            low.offsetHeight;
+            low.style.animation = 'lowerExit 0.6s ease forwards';
+            window.__overlayLowerExitTO = setTimeout(() => {
+                try {
+                    low.classList.remove('saindo');
+                    low.style.animation = 'none';
+                    low.style.display = 'none';
+                    low.style.left = '-10000px';
+                    low.style.bottom = '-10000px';
+                    low.style.visibility = 'hidden';
+                    low.style.opacity = '0';
+                    low.style.transform = 'translateY(160px)';
+        low.style.left = '-10000px';
+        low.style.bottom = '-10000px';
+                } catch(e) {}
+            }, 620);
+        }
+    } catch(e) {}
+    break;
+
+
+                    case 'show_goal_lower':
+                        try {
+                            if (window.__goalLowerTO) { clearTimeout(window.__goalLowerTO); window.__goalLowerTO = null; }
+                            const gd = msg.goalData || {};
+                            const nm = (gd.num ? (gd.num + ' ') : '') + (gd.name || 'GOL');
+                            document.getElementById('goal-lower-name').innerText = nm;
+                            document.getElementById('goal-lower-role').innerText = gd.teamName || '';
+                            if (gd.crest) applySafeImageSource('goal-lower-crest', gd.crest, '');
+                            document.getElementById('overlay-goal-lower').classList.add('visible');
+                            window.__goalLowerTO = setTimeout(() => {
+                                try { document.getElementById('overlay-goal-lower').classList.remove('visible'); } catch(e) {}
+                                window.__goalLowerTO = null;
+                            }, 5000);
+                        } catch(e) {}
+                        break;
+
+                    case 'hide_goal_lower':
+                        try {
+                            if (window.__goalLowerTO) { clearTimeout(window.__goalLowerTO); window.__goalLowerTO = null; }
+                            document.getElementById('overlay-goal-lower').classList.remove('visible');
+                        } catch(e) {}
+                        break;
+
+                    case 'goal_score_burst':
+                        try {
+                            const gsd = msg.goalScoreData || {};
+                            runGoalScoreAnimation((gsd.teamSide === 'fora') ? 'fora' : 'casa', parseInt(gsd.scoreValue, 10) || 0, String(gsd.teamName || '').trim());
+                        } catch(e) {}
+                        break;
+
+                    case 'show_interview_lower':
+                        try {
+                            if (window.__interviewLowerTO) { clearTimeout(window.__interviewLowerTO); window.__interviewLowerTO = null; }
+                            const idt = msg.interviewData || {};
+                            document.getElementById('interview-lower-name').innerText = (idt.displayName || (idt.num ? (idt.num + ' ' + (idt.name||'')) : (idt.name||'')) || 'ENTREVISTA');
+                            document.getElementById('interview-lower-role').innerText = idt.teamName || '';
+                            if (idt.crest) applySafeImageSource('interview-lower-crest', idt.crest, '');
+                            document.getElementById('overlay-interview-lower').classList.add('visible');
+                            window.__interviewLowerTO = setTimeout(() => {
+                                try { document.getElementById('overlay-interview-lower').classList.remove('visible'); } catch(e) {}
+                                window.__interviewLowerTO = null;
+                            }, 5000);
+                        } catch(e) {}
+                        break;
+
+                    case 'hide_interview_lower':
+                        try {
+                            if (window.__interviewLowerTO) { clearTimeout(window.__interviewLowerTO); window.__interviewLowerTO = null; }
+                            document.getElementById('overlay-interview-lower').classList.remove('visible');
+                        } catch(e) {}
+                        break;
+
+
+                    case 'show_postmatch_lower':
+                        try {
+                            // helper cor1
+                            const __pmCor1 = (cData) => {
+                                try {
+                                    if(!cData) return '#000';
+                                    if(typeof cData === 'string') return cData;
+                                    return (cData.c1 || cData.cor1 || cData.primary || '#000');
+                                } catch(e) { return '#000'; }
+                            };
+
+                            if (window.__postMatchLowerTO) { clearTimeout(window.__postMatchLowerTO); window.__postMatchLowerTO = null; }
+
+                            const pd = msg.postmatchData || msg.postMatchData || {};
+                            const topText = (pd.topText || pd.textoCima || '').toString();
+                            const headText = (pd.headline || pd.manchete || pd.textoBaixo || '').toString();
+
+                            // textos
+                            if (topText) document.getElementById('pm-placar').innerText = topText.toUpperCase();
+                            if (headText) document.getElementById('pm-headline-text').innerText = headText.toUpperCase();
+
+                            // escudos
+                            try { applySafeImageSource('pm-crest-home', (pd.homeCrest || (d && d.casa ? d.casa.logo : '') || ''), ''); } catch(e) {}
+                            try { applySafeImageSource('pm-crest-away', (pd.awayCrest || (d && d.fora ? d.fora.logo : '') || ''), ''); } catch(e) {}
+
+                            // bases (cada time com sua cor1)
+                            try { document.getElementById('pm-base-home').style.backgroundColor = __pmCor1(d && d.casa ? d.casa.corData : null); } catch(e) {}
+                            try { document.getElementById('pm-base-away').style.backgroundColor = __pmCor1(d && d.fora ? d.fora.corData : null); } catch(e) {}
+
+                            // garante cor da barra superior = BG2
+                            try { document.querySelector('#overlay-postmatch-lower .pm-topbar').style.background = 'var(--bg-2)'; } catch(e) {}
+
+                            document.getElementById('overlay-postmatch-lower').classList.add('visible');
+
+                            try {
+                                requestAnimationFrame(() => {
+                                    try {
+                                        const __pmHeadlineWrap = document.querySelector('#overlay-postmatch-lower .pm-headline');
+                                        const __pmHeadlineText = document.getElementById('pm-headline-text');
+
+                                        if (__pmHeadlineWrap && __pmHeadlineText) {
+                                            __pmHeadlineWrap.style.minWidth = '0';
+                                            __pmHeadlineWrap.style.overflow = 'hidden';
+
+                                            __pmHeadlineText.style.display = 'block';
+                                            __pmHeadlineText.style.width = '100%';
+                                            __pmHeadlineText.style.maxWidth = '100%';
+                                            __pmHeadlineText.style.whiteSpace = 'nowrap';
+                                            __pmHeadlineText.style.overflow = 'hidden';
+                                            __pmHeadlineText.style.textOverflow = 'ellipsis';
+
+                                            const __pmBaseFont = 28;
+                                            const __pmMinFont = 22;
+
+                                            __pmHeadlineText.style.fontSize = __pmBaseFont + 'px';
+
+                                            while (
+                                                __pmHeadlineText.scrollWidth > __pmHeadlineText.clientWidth &&
+                                                parseFloat(window.getComputedStyle(__pmHeadlineText).fontSize) > __pmMinFont
+                                            ) {
+                                                __pmHeadlineText.style.fontSize = (parseFloat(window.getComputedStyle(__pmHeadlineText).fontSize) - 1) + 'px';
+                                            }
+                                        }
+                                    } catch(e) {}
+                                });
+                            } catch(e) {}
+
+                            // auto-hide opcional (se vier durationMs)
+                            const dur = parseInt(pd.durationMs || 0, 10);
+                            if (dur && dur > 0) {
+                                window.__postMatchLowerTO = setTimeout(() => {
+                                    try { document.getElementById('overlay-postmatch-lower').classList.remove('visible'); } catch(e) {}
+                                    window.__postMatchLowerTO = null;
+                                }, dur);
+                            }
+                        } catch(e) {}
+                        break;
+
+                    case 'hide_postmatch_lower':
+                        try {
+                            if (window.__postMatchLowerTO) { clearTimeout(window.__postMatchLowerTO); window.__postMatchLowerTO = null; }
+                            document.getElementById('overlay-postmatch-lower').classList.remove('visible');
+                        } catch(e) {}
+                        break;
+
+                    case 'show_champion':
+                        try {
+                            window.applyChampionData && window.applyChampionData(msg.championData || (d ? d.champion : {}) || {}, d);
+                            window.showChampion && window.showChampion();
+                        } catch(e) {}
+                        break;
+
+                    case 'hide_champion':
+                        try {
+                            window.hideChampion && window.hideChampion();
+                        } catch(e) {}
+                        break;
+
+                    case 'repeat_champion':
+                        try {
+                            window.applyChampionData && window.applyChampionData(msg.championData || (d ? d.champion : {}) || {}, d);
+                            window.replayChampion && window.replayChampion();
+                        } catch(e) {}
+                        break;
+
+                    case 'show_status': renderStatus(msg.statusText, d); break;
+                    case 'hide_status': esconderInferior(); break;
+
+                    case 'show_arbitragem': const arb = d.arbitragem; document.getElementById('out-arb-princ').innerText = arb.principal; document.getElementById('out-arb-ass1').innerText = arb.assist1; document.getElementById('out-arb-ass2').innerText = arb.assist2; document.getElementById('out-arb-4th').innerText = arb.nm4th; document.getElementById('out-arb-var').innerText = arb.nmVar; const r4 = document.getElementById('row-arb-4th'); const rV = document.getElementById('row-arb-var'); if(arb.show4th) r4.classList.remove('hidden'); else r4.classList.add('hidden'); if(arb.showVar) rV.classList.remove('hidden'); else rV.classList.add('hidden'); document.getElementById('container-arbitragem').classList.add('visible'); break;
+                    case 'hide_arbitragem': document.getElementById('container-arbitragem').classList.remove('visible'); break;
+                    
+                    case 'show_merchan': if(msg.merchanImg) { updateMerchanLayout(true); const img = document.getElementById('img-merchan'); applySafeImageSource(img, msg.merchanImg, ''); img.style.display = 'block'; toggleNomes(true); setTimeout(() => { document.getElementById('merchan-content').classList.add('visible'); }, 800); } break;
+                    case 'hide_merchan': document.getElementById('merchan-content').classList.remove('visible'); updateMerchanLayout(true); setTimeout(() => { toggleNomes(false); }, 800); break;
+
+                    case 'show_tv_logo': logoTv.classList.add('visible'); break;
+                    case 'hide_tv_logo': logoTv.classList.remove('visible'); break;
+
+                    case 'clear_all': stopTimer(); esconderSuperior(); esconderInferior();
+                        try { document.getElementById('overlay-postmatch-lower') && document.getElementById('overlay-postmatch-lower').classList.remove('visible'); } catch(e) {}
+                        try { if (window.__postMatchLowerTO) { clearTimeout(window.__postMatchLowerTO); window.__postMatchLowerTO = null; } } catch(e) {}
+                        try { window.hideChampion && window.hideChampion(); } catch(e) {}
+
+                        const introCard = document.getElementById('match-card'); if (introCard.classList.contains('intro-enter')) { introCard.classList.remove('intro-enter'); introCard.classList.add('intro-exit'); }
+                        activeLineupSide = null; activeLineupMode = null; lineupBox.classList.remove('ativo'); 
+                        if (containerPen && containerPen.classList.contains('show')) { containerPen.classList.add('exiting'); setTimeout(() => { containerPen.classList.remove('show'); }, 600); }
+                        document.getElementById('container-arbitragem').classList.remove('visible');
+                        document.getElementById('merchan-content').classList.remove('visible');
+                        logoTv.classList.remove('visible');
+                        hideCard(); hideSubstitution(); (function(){ var low = document.getElementById('overlay-lower'); if(low){ low.classList.remove('visible'); low.classList.remove('saindo'); low.style.animation = 'none'; low.style.display = 'none'; low.style.visibility = 'visible'; low.style.opacity = '0'; low.style.transform = 'translateY(160px)';
+        low.style.left = '-10000px';
+        low.style.bottom = '-10000px'; } })();
+                        try { if(window.__goalLowerTO){clearTimeout(window.__goalLowerTO); window.__goalLowerTO=null;} } catch(e) {}
+                        try { if(window.__interviewLowerTO){clearTimeout(window.__interviewLowerTO); window.__interviewLowerTO=null;} } catch(e) {}
+                        try { document.getElementById('overlay-goal-lower').classList.remove('visible'); } catch(e) {}
+                        try { document.getElementById('overlay-interview-lower').classList.remove('visible'); } catch(e) {}
+                        try { hideOutrosJogosOverlay(); } catch(e) {}
+                        break;
+                }
+            }
+        
+
+/* === PATCH PLAYPAUSE: Actions clock_pause / clock_resume === */
+try {
+    if (typeof window.clockPaused === 'undefined') window.clockPaused = false;
+    if (msg && msg.type === 'action') {
+        if (msg.action === 'clock_pause') { window.clockPaused = true; }
+        if (msg.action === 'clock_resume') { window.clockPaused = false; }
+    }
+} catch(e) {}
+/* === /PATCH PLAYPAUSE === */
+};
+    
+
+/* === PATCH FINAL LOWER V5 — fluxo único sem conflito === */
+try {
+    var __lowerStyleFinal = document.createElement('style');
+    __lowerStyleFinal.id = 'patch-lower-style-v5-final';
+    __lowerStyleFinal.innerHTML = `
+        #overlay-lower:not(.visible):not(.saindo){
+            display:none !important;
+            visibility:hidden !important;
+            opacity:0 !important;
+            transform:translateY(160px) !important;
+            left:-10000px !important;
+            bottom:-10000px !important;
+            animation:none !important;
+        }
+        #overlay-lower.visible,
+        #overlay-lower.saindo{
+            display:block !important;
+            visibility:visible !important;
+            left:80px !important;
+            bottom:80px !important;
+            will-change: transform, opacity;
+        }
+    `;
+    document.head.appendChild(__lowerStyleFinal);
+} catch(e) {}
+/* === /PATCH FINAL LOWER V5 === */
+
+</script>
+<!-- === GLOBAL SCALE FIX FOR ONLINE OBS RENDER === -->
+    <script>
+    (function(){
+        try {
+            function __obsGlobalScaleFix(){
+                try {
+                    var dpr = window.devicePixelRatio || 1;
+                    if (Math.abs(dpr - 1) <= 0.01) return;
+                    var scale = 1 / dpr;
+                    document.documentElement.style.transformOrigin = 'top left';
+                    document.documentElement.style.transform = 'scale(' + scale + ')';
+                    document.documentElement.style.width = (100 * dpr) + '%';
+                    document.documentElement.style.height = (100 * dpr) + '%';
+                } catch(e) {}
+            }
+            window.addEventListener('load', function(){
+                try { __obsGlobalScaleFix(); } catch(e) {}
+                try { setTimeout(__obsGlobalScaleFix, 100); } catch(e) {}
+                try { setTimeout(__obsGlobalScaleFix, 500); } catch(e) {}
+            });
+            window.addEventListener('resize', __obsGlobalScaleFix);
+        } catch(e) {}
+    })();
+
+/* === PATCH: Overlay Pós-Jogo - Enquete === */
+try {
+    if (!window.__overlay_postmatch_poll_v1) {
+        window.__overlay_postmatch_poll_v1 = true;
+        window.__activePostMatchPollOverlay = null;
+
+        (function ensurePollOverlay(){
+            if (document.getElementById('overlay-postmatch-poll')) return;
+            const style = document.createElement('style');
+            style.id = 'overlay-postmatch-poll-style';
+            style.textContent = `
+                #overlay-postmatch-poll{position:fixed;left:50%;bottom:80px;transform:translateX(-50%) translateY(120px);width:771px;min-height:251px;height:auto;z-index:5600;pointer-events:none;opacity:0;display:none;}
+                #overlay-postmatch-poll.visible{display:block;animation:pollOverlayIn .55s ease forwards;}
+                #overlay-postmatch-poll.saindo{display:block;animation:pollOverlayOut .45s ease forwards;}
+                @keyframes pollOverlayIn{from{opacity:0;transform:translateX(-50%) translateY(120px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+                @keyframes pollOverlayOut{from{opacity:1;transform:translateX(-50%) translateY(0);}to{opacity:0;transform:translateX(-50%) translateY(120px);}}
+                #overlay-postmatch-poll .poll-card{width:771px;min-height:251px;height:auto;background:var(--bg-gradient);border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.45);border-bottom:4px solid var(--bg-2);padding:16px 18px 14px 18px;display:flex;flex-direction:column;overflow:hidden;}
+                #overlay-postmatch-poll .poll-question{font-size:28px;line-height:1.05;font-weight:900;color:var(--txt-2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:10px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+                #overlay-postmatch-poll .poll-options{display:flex;flex-direction:column;gap:8px;flex:1;justify-content:flex-start;}
+                #overlay-postmatch-poll .poll-row{display:grid;grid-template-columns:54px 1fr 82px;gap:10px;align-items:center;min-height:28px;}
+                #overlay-postmatch-poll .poll-row.no-thumb{grid-template-columns:1fr 82px;}
+                #overlay-postmatch-poll .poll-thumb{width:54px;height:54px;background:#ffffff;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.32);}
+                #overlay-postmatch-poll .poll-row.no-thumb .poll-thumb{display:none;}
+                #overlay-postmatch-poll .poll-thumb img{width:100%;height:100%;object-fit:contain;}
+                #overlay-postmatch-poll .poll-bar-wrap{position:relative;height:30px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;border:1px solid rgba(255,255,255,.08);}
+                #overlay-postmatch-poll .poll-bar-fill{position:absolute;left:0;top:0;bottom:0;background:var(--bg-2);border-radius:999px;}
+                #overlay-postmatch-poll .poll-label{position:absolute;left:12px;right:10px;top:50%;transform:translateY(-50%);font-size:18px;font-weight:800;color:var(--txt-2);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+                #overlay-postmatch-poll .poll-percent{font-size:28px;font-weight:900;color:var(--txt-3);text-align:right;line-height:1;}
+            `;
+            document.head.appendChild(style);
+            const host = document.createElement('div');
+            host.id = 'overlay-postmatch-poll';
+            host.innerHTML = '<div class="poll-card"><div class="poll-question" id="poll-overlay-question"></div><div class="poll-options" id="poll-overlay-options"></div></div>';
+            document.body.appendChild(host);
+        })();
+
+        window.renderPostMatchPollOverlay = function(pollData, data) {
+            const host = document.getElementById('overlay-postmatch-poll');
+            const q = document.getElementById('poll-overlay-question');
+            const optionsHost = document.getElementById('poll-overlay-options');
+            if (!host || !q || !optionsHost) return;
+            let livePoll = pollData || null;
+            try {
+                const liveState = ((data || {}).postMatchPolls || {});
+                const liveItems = Array.isArray(liveState.items) ? liveState.items : [];
+                const activeId = String((pollData && pollData.id) || liveState.activeId || '');
+                if (activeId) {
+                    const matched = liveItems.find(function(item){ return String((item || {}).id || '') === activeId; });
+                    if (matched) livePoll = matched;
+                }
+            } catch(e) {}
+            if (!livePoll || !Array.isArray(livePoll.options)) return;
+            try { window.__activePostMatchPollOverlay = livePoll; } catch(e) {}
+            try { setColors(data || {}); } catch(e) {}
+            q.textContent = String((livePoll.question || 'RESULTADO DE ENQUETE')).toUpperCase();
+            q.style.display = 'block';
+            q.style.visibility = 'visible';
+            q.style.opacity = '1';
+            const opts = (livePoll.options || []).slice(0, 6).filter(function(opt){
+                return String(((opt || {}).label) || '').trim() || String(((opt || {}).image) || '').trim() || (parseInt(((opt || {}).percent) || 0, 10) || 0);
+            });
+            const count = Math.max(1, opts.length);
+            const card = host.querySelector('.poll-card');
+            if (card) {
+                card.style.height = 'auto';
+                card.style.minHeight = count <= 2 ? '150px' : (count <= 3 ? '185px' : '251px');
+            }
+            optionsHost.style.gap = count <= 2 ? '8px' : '12px';
+            optionsHost.innerHTML = opts.map((opt) => {
+                const label = String((opt && opt.label) || '').toUpperCase();
+                const percent = Math.max(0, Math.min(100, parseInt((opt && opt.percent) || 0, 10) || 0));
+                const image = String((opt && opt.image) || '').trim();
+                const hasImage = !!image;
+                return `<div class="poll-row${hasImage ? '' : ' no-thumb'}">${hasImage ? `<div class="poll-thumb"><img src="${image}"></div>` : ''}<div class="poll-bar-wrap"><div class="poll-bar-fill" style="width:${percent}%;"></div><div class="poll-label">${label}</div></div><div class="poll-percent">${percent}%</div></div>`;
+            }).join('');
+        };
+
+        window.showPostMatchPollOverlay = function(pollData, data) {
+            const host = document.getElementById('overlay-postmatch-poll');
+            if (!host) return;
+            window.__activePostMatchPollOverlay = pollData || null;
+            renderPostMatchPollOverlay(pollData, data || {});
+            host.classList.remove('saindo');
+            host.classList.add('visible');
+        };
+
+        window.hidePostMatchPollOverlay = function() {
+            const host = document.getElementById('overlay-postmatch-poll');
+            if (!host) return;
+            window.__activePostMatchPollOverlay = null;
+            try {
+                if (window.__postMatchPollHideTO) {
+                    clearTimeout(window.__postMatchPollHideTO);
+                    window.__postMatchPollHideTO = null;
+                }
+            } catch(e) {}
+            const hostIsVisible = host.classList.contains('visible');
+            if (!hostIsVisible) {
+                host.classList.remove('visible');
+                host.classList.remove('saindo');
+                try {
+                    host.style.display = 'none';
+                    host.style.visibility = 'hidden';
+                    host.style.opacity = '0';
+                    host.style.pointerEvents = 'none';
+                    host.style.transform = 'translateY(40px)';
+                    host.offsetHeight;
+                    host.style.display = '';
+                    host.style.visibility = '';
+                    host.style.opacity = '';
+                    host.style.pointerEvents = '';
+                    host.style.transform = '';
+                } catch(e) {}
+                return;
+            }
+            host.classList.remove('visible');
+            host.classList.add('saindo');
+            window.__postMatchPollHideTO = setTimeout(() => {
+                try {
+                    host.classList.remove('saindo');
+                    host.style.display = 'none';
+                    host.style.visibility = 'hidden';
+                    host.style.opacity = '0';
+                    host.style.pointerEvents = 'none';
+                    host.style.transform = 'translateY(40px)';
+                    host.offsetHeight;
+                    host.style.display = '';
+                    host.style.visibility = '';
+                    host.style.opacity = '';
+                    host.style.pointerEvents = '';
+                    host.style.transform = '';
+                } catch(e) {}
+                window.__postMatchPollHideTO = null;
+            }, 460);
+        };
+
+        const __overlayOnMessageOriginal = channel.onmessage;
+        channel.onmessage = function(ev) {
+            try { if (typeof __overlayOnMessageOriginal === 'function') __overlayOnMessageOriginal.call(this, ev); } catch(e) {}
+            try {
+                const msg = ev && ev.data ? ev.data : {};
+                const d = msg.data || {};
+                if (msg.type === 'update_data' && window.__activePostMatchPollOverlay) {
+                    renderPostMatchPollOverlay(window.__activePostMatchPollOverlay, d);
+                }
+                if (msg.type === 'action') {
+                    switch (msg.action) {
+                        case 'show_postmatch_poll':
+                            showPostMatchPollOverlay(msg.postMatchPollData || (((d || {}).postMatchPolls || {}).items || []).find(p => p.id === ((d || {}).postMatchPolls || {}).activeId) || null, d);
+                            break;
+                        case 'hide_postmatch_poll':
+                            hidePostMatchPollOverlay();
+                            break;
+                        case 'clear_all':
+                            hidePostMatchPollOverlay();
+                            break;
+                    }
+                }
+            } catch(e) {}
+        };
+    }
+} catch(e) {}
+/* === /PATCH: Overlay Pós-Jogo - Enquete === */
+
+    
+
+/* === PATCH ESCALACAO DINAMICA 11 A 1 === */
+try {
+    if (!window.__PATCH_ESCALACAO_DINAMICA_V1__) {
+        window.__PATCH_ESCALACAO_DINAMICA_V1__ = true;
+
+        function getLineupPlayerLimitOverlaySafe(teamData) {
+            try {
+                let n = teamData && teamData.lineup && teamData.lineup.playerLimit ? parseInt(teamData.lineup.playerLimit, 10) : 11;
+                if (isNaN(n)) n = 11;
+                if (n < 1) n = 1;
+                if (n > 11) n = 11;
+                return n;
+            } catch(e) { return 11; }
+        }
+
+        if (typeof formations !== 'undefined') {
+            formations['10 ESPECIAL'] = [{b:15,l:50}, {b:27,l:18}, {b:27,l:40}, {b:27,l:60}, {b:27,l:82}, {b:50,l:30}, {b:50,l:50}, {b:50,l:70}, {b:72,l:35}, {b:72,l:65}];
+            formations['3-3-3'] = [{b:15,l:50}, {b:28,l:30}, {b:28,l:50}, {b:28,l:70}, {b:52,l:30}, {b:52,l:50}, {b:52,l:70}, {b:76,l:30}, {b:76,l:50}, {b:76,l:70}];
+            formations['4-3-2'] = [{b:15,l:50}, {b:27,l:18}, {b:27,l:40}, {b:27,l:60}, {b:27,l:82}, {b:52,l:30}, {b:52,l:50}, {b:52,l:70}, {b:76,l:40}, {b:76,l:60}];
+            formations['3-4-2'] = [{b:15,l:50}, {b:28,l:30}, {b:28,l:50}, {b:28,l:70}, {b:52,l:20}, {b:52,l:40}, {b:52,l:60}, {b:52,l:80}, {b:76,l:40}, {b:76,l:60}];
+            formations['9 ESPECIAL'] = [{b:15,l:50}, {b:30,l:25}, {b:30,l:50}, {b:30,l:75}, {b:55,l:30}, {b:55,l:50}, {b:55,l:70}, {b:78,l:40}, {b:78,l:60}];
+            formations['3-3-2'] = formations['9 ESPECIAL'];
+            formations['4-2-2'] = [{b:15,l:50}, {b:28,l:18}, {b:28,l:40}, {b:28,l:60}, {b:28,l:82}, {b:55,l:40}, {b:55,l:60}, {b:78,l:40}, {b:78,l:60}];
+            formations['2-4-2'] = [{b:15,l:50}, {b:30,l:38}, {b:30,l:62}, {b:55,l:20}, {b:55,l:40}, {b:55,l:60}, {b:55,l:80}, {b:78,l:40}, {b:78,l:60}];
+            formations['8 ESPECIAL'] = [{b:15,l:50}, {b:30,l:28}, {b:30,l:50}, {b:30,l:72}, {b:55,l:30}, {b:55,l:50}, {b:55,l:70}, {b:80,l:50}];
+            formations['3-3-1'] = formations['8 ESPECIAL'];
+            formations['2-3-2'] = [{b:15,l:50}, {b:30,l:38}, {b:30,l:62}, {b:55,l:28}, {b:55,l:50}, {b:55,l:72}, {b:80,l:38}, {b:80,l:62}];
+            formations['3-2-2'] = [{b:15,l:50}, {b:30,l:28}, {b:30,l:50}, {b:30,l:72}, {b:55,l:40}, {b:55,l:60}, {b:80,l:38}, {b:80,l:62}];
+            formations['7 ESPECIAL'] = [{b:15,l:50}, {b:32,l:35}, {b:32,l:65}, {b:56,l:28}, {b:56,l:50}, {b:56,l:72}, {b:80,l:50}];
+            formations['2-3-1'] = formations['7 ESPECIAL'];
+            formations['3-2-1'] = [{b:15,l:50}, {b:32,l:28}, {b:32,l:50}, {b:32,l:72}, {b:56,l:40}, {b:56,l:60}, {b:80,l:50}];
+            formations['2-2-2'] = [{b:15,l:50}, {b:32,l:38}, {b:32,l:62}, {b:56,l:38}, {b:56,l:62}, {b:80,l:38}, {b:80,l:62}];
+            formations['6 ESPECIAL'] = [{b:15,l:50}, {b:35,l:38}, {b:35,l:62}, {b:58,l:38}, {b:58,l:62}, {b:82,l:50}];
+            formations['2-2-1'] = formations['6 ESPECIAL'];
+            formations['1-3-1'] = [{b:15,l:50}, {b:35,l:50}, {b:58,l:28}, {b:58,l:50}, {b:58,l:72}, {b:82,l:50}];
+            formations['2-1-2'] = [{b:15,l:50}, {b:35,l:38}, {b:35,l:62}, {b:58,l:50}, {b:82,l:38}, {b:82,l:62}];
+            formations['5 ESPECIAL'] = [{b:15,l:50}, {b:38,l:35}, {b:38,l:65}, {b:62,l:50}, {b:84,l:50}];
+            formations['2-1-1'] = formations['5 ESPECIAL'];
+            formations['1-2-1'] = [{b:15,l:50}, {b:38,l:50}, {b:62,l:35}, {b:62,l:65}, {b:84,l:50}];
+            formations['2-2'] = [{b:15,l:50}, {b:42,l:38}, {b:42,l:62}, {b:76,l:38}, {b:76,l:62}];
+            formations['4 ESPECIAL'] = [{b:18,l:50}, {b:45,l:35}, {b:45,l:65}, {b:78,l:50}];
+            formations['1-2'] = formations['4 ESPECIAL'];
+            formations['2-1'] = [{b:18,l:50}, {b:45,l:38}, {b:45,l:62}, {b:78,l:50}];
+            formations['1-1-1'] = [{b:18,l:50}, {b:40,l:50}, {b:62,l:50}, {b:84,l:50}];
+            formations['3 ESPECIAL'] = [{b:20,l:50}, {b:52,l:38}, {b:52,l:62}];
+            formations['1-1'] = [{b:20,l:50}, {b:52,l:50}, {b:82,l:50}];
+            formations['2'] = formations['3 ESPECIAL'];
+            formations['2 ESPECIAL'] = [{b:28,l:50}, {b:72,l:50}];
+            formations['1'] = formations['2 ESPECIAL'];
+            formations['1 ESPECIAL'] = [{b:50,l:50}];
+            formations['X1'] = formations['1 ESPECIAL'];
+        }
+
+        setupView = function(teamData, mode) {
+            if(!lineupBox.classList.contains('ativo')) { slider.className = 'slider-wrapper mode-list'; }
+            applySafeImageSource('L_ESCUDO', teamData.logo, '');
+            document.getElementById('L_NOME').innerText = teamData.nome;
+            document.getElementById('L_TECNICO').innerText = teamData.lineup.coach;
+            const playerLimit = getLineupPlayerLimitOverlaySafe(teamData);
+            listaDiv.innerHTML = '';
+            const players = teamData.lineup.players || [];
+            players.slice(0, playerLimit).forEach(p => { listaDiv.innerHTML += `<div class="l-row"><div class="l-num">${p.num}</div><div class="l-name">${p.name}</div></div>`; });
+            campoDiv.innerHTML = '';
+            let rawTatic = teamData.lineup.tactic || "4-4-2";
+            if(rawTatic === "4-4-2") rawTatic = "4-4-2 A"; if(rawTatic === "4-3-3") rawTatic = "4-3-3 A";
+            document.getElementById('L_TATICA').innerText = rawTatic;
+            const coords = formations[rawTatic] || formations[String(playerLimit) + ' ESPECIAL'] || formations['DEFAULT'];
+            players.slice(0, playerLimit).forEach((p, i) => {
+                if(!coords[i]) return;
+                const pos = coords[i]; const dot = document.createElement('div'); dot.className = 'tac-player'; dot.style.bottom = pos.b + '%'; dot.style.left = pos.l + '%';
+                dot.innerHTML = `<div class="tac-dot" style="background:var(--bg-2); color:var(--txt-1);">${p.num}</div><div class="tac-name">${p.name}</div>`;
+                campoDiv.appendChild(dot);
+            });
+            listaResDiv.innerHTML = '';
+            const reserves = players.slice(playerLimit);
+            if(reserves.length > 0) { reserves.forEach(p => { listaResDiv.innerHTML += `<div class="l-row"><div class="l-num">${p.num}</div><div class="l-name">${p.name}</div></div>`; }); } else { listaResDiv.innerHTML = '<div style="text-align:center; color:var(--txt-2); margin-top:20px; font-weight:bold;">SEM RESERVAS CADASTRADOS</div>'; }
+            lineupBox.classList.add('ativo');
+            setTimeout(() => {
+                slider.className = 'slider-wrapper';
+                if(mode === 'pitch') slider.classList.add('mode-pitch'); else if (mode === 'reserves') slider.classList.add('mode-reserves'); else slider.classList.add('mode-list');
+            }, 50);
+        };
+    }
+} catch(e) {}
+/* === /PATCH ESCALACAO DINAMICA 11 A 1 === */
+
+</script>
+    <!-- === /GLOBAL SCALE FIX FOR ONLINE OBS RENDER === -->
+
+<script>
+/* === PATCH ESCALACAO: TROCA POSICAO 2 COM 5 NO CAMPO - TODOS POSSIVEIS === */
+try {
+    if (!window.__PATCH_ESCALACAO_SWAP_COORD_2_5_TODOS_V1__) {
+        window.__PATCH_ESCALACAO_SWAP_COORD_2_5_TODOS_V1__ = true;
+        const __swapFormationCoordsTwoAndFiveDone = new WeakSet();
+        function swapFormationCoordsTwoAndFiveSafe(formationKey) {
+            try {
+                if (!formations || !formations[formationKey] || formations[formationKey].length < 5) return;
+                if (__swapFormationCoordsTwoAndFiveDone.has(formations[formationKey])) return;
+                const temp = formations[formationKey][1];
+                formations[formationKey][1] = formations[formationKey][4];
+                formations[formationKey][4] = temp;
+                __swapFormationCoordsTwoAndFiveDone.add(formations[formationKey]);
+            } catch(e) {}
+        }
+        [
+            '4-2-3-1', '4-4-2 A', '4-3-3 A', '3-5-2', '5-3-2', '4-1-4-1', 'DEFAULT',
+            '10 ESPECIAL', 'FUTEBOL DE 10', '3-3-3', '4-3-2', '3-4-2',
+            '9 ESPECIAL', 'FUTEBOL DE 9', '3-3-2', '4-2-2', '2-4-2',
+            '8 ESPECIAL', 'FUTEBOL DE 8', '3-3-1', '2-3-2', '3-2-2',
+            '7 ESPECIAL', 'FUTEBOL DE 7', '2-3-1', '3-2-1', '2-2-2',
+            '6 ESPECIAL', 'FUTEBOL DE 6', '2-2-1', '1-3-1', '2-1-2',
+            '5 ESPECIAL', 'FUTEBOL DE 5', '2-1-1', '1-2-1', '2-2'
+        ].forEach(function(key){ swapFormationCoordsTwoAndFiveSafe(key); });
+    }
+} catch(e) {}
+/* === /PATCH ESCALACAO: TROCA POSICAO 2 COM 5 NO CAMPO - TODOS POSSIVEIS === */
+</script>
+</body>
+</html>
